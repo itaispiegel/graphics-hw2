@@ -56,11 +56,15 @@ def parse_scene_file(file_path):
 
 
 # aaaaaaaaaaaaaaaa
-def get_color(source, ray_vec, objects, scene_settings, iteration=0):
+def get_color(source, ray_vec, objects, scene_settings, curr_object=None, iteration=0):
     if iteration == scene_settings.max_recursions:
         return scene_settings.background_color
     
-    obj, intersection_point = get_closest_object(source, ray_vec, objects)
+    obj, intersection_point, reflection_ray = get_closest_object(source, ray_vec, objects, curr_object)
+    if not obj:
+        return scene_settings.background_color
+    
+    
     
     
     
@@ -68,19 +72,24 @@ def get_color(source, ray_vec, objects, scene_settings, iteration=0):
 
 
 # returns the closet object to the source and the intersection point of the ray on object
-def get_closest_object(source, ray_vec, objects):
+def get_closest_object(source, ray_vec, objects, curr_object):
     closest_obj = None
     closest_intersection_point = None
+    closest_reflection_ray_vec = None
     min_dist = float("inf")
     
     for obj in objects:
-        intersection_point, dist = intersect(source, ray_vec, obj)
+        if obj == curr_object:
+            continue
+        
+        intersection_point, dist, reflection_ray = intersect(source, ray_vec, obj)
         if dist and dist < min_dist:
             closest_obj = obj
             closest_intersection_point = intersection_point
+            closest_reflection_ray_vec = reflection_ray
             min_dist = dist
             
-    return closest_obj, closest_intersection_point
+    return closest_obj, closest_intersection_point, closest_reflection_ray_vec
 
 
 # returns the intersection point and distance from the source to the intersection point
@@ -113,9 +122,16 @@ def sphere_intersect(source, ray_vec, sphere):
         return None, None
     t = t1 if t1 >= 0 else t2
     
+    # calculate the intersection point and the distance from the source to the intersection point
     intersection = source + t * ray_vec
     distance = np.linalg.norm(intersection - source)
-    return intersection, distance
+    
+    # Calculate the surface normal at the intersection point
+    normal = (intersection - sphere.position) / sphere.radius
+    
+    # Calculate the reflection vector
+    reflection_ray_vec = ray_vec - 2 * np.dot(ray_vec, normal) * normal
+    return intersection, distance, reflection_ray_vec
 
 
 # returns the intersection point and distance from the source to the intersection point
@@ -123,19 +139,24 @@ def plane_intersect(source, ray_vec, plane):
     t = np.dot(plane.normal, source - (plane.normal * plane.offset)) / np.dot(plane.normal, ray_vec)
     
     # Check if intersection is behind the source (according to the ray's direction)
+    # or if the ray is parallel to the plane
     if t < 0:
         return None, None
     
+    # calculate the intersection point and the distance from the source to the intersection point
     intersection = source + t * ray_vec
     distance = np.linalg.norm(intersection - source)
-    return intersection, distance
+    
+    # Calculate the reflection vector
+    reflection_ray_vec = ray_vec - 2 * np.dot(ray_vec, plane.normal) * plane.normal
+    return intersection, distance, reflection_ray_vec
 
 
 # returns the intersection point and distance from the source to the intersection point
 # this method detects if the ray intersects the cube using the slab method
 def cube_intersect(source, ray_vec, cube):
-    t_near = float('-inf')
-    t_far = float('inf')
+    t_near = float("-inf")
+    t_far = float("inf")
 
     for i in range(DIMENSIONS):
         if ray_vec[i] == 0:
@@ -154,23 +175,23 @@ def cube_intersect(source, ray_vec, cube):
                 return None, None
 
     t = t_near if t_near >= 0 else t_far
+    
+    # calculate the intersection point and the distance from the source to the intersection point
     intersection = source + t * ray_vec
     distance = np.linalg.norm(intersection - source)
-    return intersection, distance
+    
+    # Calculate the reflection vector
+    reflection_ray_vec = np.zeros(3)
+    for i in range(3):
+        if abs(intersection[i] - cube.position[i]) < 1e-10:
+            reflection_ray_vec[i] = -ray_vec[i]
+        elif abs(intersection[i] - (cube.position[i] + cube.scale)) < 1e-10:
+            reflection_ray_vec[i] = ray_vec[i]
+        else:
+            reflection_ray_vec[i] = 0
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return intersection, distance, reflection_ray_vec
+    
 
 def save_image(image_array):
     image = Image.fromarray(np.uint8(image_array))
@@ -191,7 +212,7 @@ def main():
     camera, scene_settings, objects = parse_scene_file(args.scene_file)
 
     # TODO: Implement the ray tracer
-    image_array = np.zeros((args.height, args.width, 3))
+    image_array = np.zeros((args.height, args.width, DIMENSIONS))
     
     # calculate image's center, towards vector, right vector and up vector and the ratio
     v_to = camera.look_at - camera.position
@@ -211,7 +232,7 @@ def main():
             ray_vec = p - camera.position
 
             # calculate the color of the pixel using ray tracing
-            image_array[i][j] = get_color(camera.position, p, ray_vec, objects, scene_settings)
+            image_array[i][j] = get_color(camera.position, ray_vec, objects, scene_settings)
             
     # Save the output image
     save_image(image_array)
