@@ -4,8 +4,7 @@ import numpy as np
 
 from camera import Camera
 from light import Light
-from material import Material
-from surfaces import Cube, InfinitePlane, Sphere
+from surfaces import Cube, InfinitePlane, Material, Sphere
 
 
 class SceneSettings:
@@ -21,7 +20,7 @@ class SceneSettings:
 
 
 def parse_scene_file(file_path):
-    objects = []
+    surfaces, materials, lights = [], [], []
     camera = None
     scene_settings = None
     with open(file_path, "r") as f:
@@ -42,19 +41,22 @@ def parse_scene_file(file_path):
                 material = Material(
                     params[:3], params[3:6], params[6:9], params[9], params[10]
                 )
-                objects.append(material)
+                materials.append(material)
             elif obj_type == "sph":
-                sphere = Sphere(params[:3], params[3], int(params[4]))
-                objects.append(sphere)
+                material = materials[int(params[4]) - 1]
+                sphere = Sphere(params[:3], params[3], material)
+                surfaces.append(sphere)
             elif obj_type == "pln":
-                plane = InfinitePlane(params[:3], params[3], int(params[4]))
-                objects.append(plane)
+                material = materials[int(params[4]) - 1]
+                plane = InfinitePlane(params[:3], params[3], material)
+                surfaces.append(plane)
             elif obj_type == "box":
-                cube = Cube(params[:3], params[3], int(params[4]))
-                objects.append(cube)
+                material = materials[int(params[4]) - 1]
+                cube = Cube(params[:3], params[3], material)
+                surfaces.append(cube)
             elif obj_type == "lgt":
                 light = Light(params[:3], params[3:6], params[6], params[7], params[8])
-                objects.append(light)
+                lights.append(light)
             else:
                 raise ValueError("Unknown object type: {}".format(obj_type))
-    return camera, scene_settings, objects
+    return camera, scene_settings, surfaces, lights

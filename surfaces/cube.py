@@ -2,12 +2,12 @@ from typing import List, Tuple
 
 import numpy as np
 
-from .base_surface import Surface
+from .base_surface import Material, Surface
 
 
 class Cube(Surface):
-    def __init__(self, position: List[float], scale: float, material_index: int):
-        super().__init__(material_index)
+    def __init__(self, position: List[float], scale: float, material: Material):
+        super().__init__(material)
         self.position = np.array(position)
         self.scale = scale
 

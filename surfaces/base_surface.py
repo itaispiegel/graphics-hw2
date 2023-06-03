@@ -2,10 +2,12 @@ from typing import Tuple
 
 import numpy as np
 
+from .material import Material
+
 
 class Surface:
-    def __init__(self, material_index: int):
-        self.material_index = material_index
+    def __init__(self, material: Material):
+        self.material = material
 
     def intersect(
         self, source: np.ndarray, ray_vec: np.ndarray

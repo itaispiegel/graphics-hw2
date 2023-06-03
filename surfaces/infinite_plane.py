@@ -2,12 +2,12 @@ from typing import List, Tuple
 
 import numpy as np
 
-from .base_surface import Surface
+from .base_surface import Material, Surface
 
 
 class InfinitePlane(Surface):
-    def __init__(self, normal: List[float], offset: float, material_index: int):
-        super().__init__(material_index)
+    def __init__(self, normal: List[float], offset: float, material: Material):
+        super().__init__(material)
         self.normal = np.array(normal)
         self.offset = offset
 

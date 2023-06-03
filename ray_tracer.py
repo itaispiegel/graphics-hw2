@@ -52,7 +52,7 @@ def main():
     args = parser.parse_args()
 
     # Parse the scene file
-    camera, scene_settings, objects = parse_scene_file(args.scene_file)
+    camera, scene_settings, objects, lights = parse_scene_file(args.scene_file)
 
     # TODO: Implement the ray tracer
     image_array = np.zeros((args.height, args.width, 3))
