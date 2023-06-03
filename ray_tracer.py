@@ -10,9 +10,7 @@ def get_color(source, ray_vec, objects, scene_settings, curr_object=None, iterat
     if iteration == scene_settings.max_recursions:
         return scene_settings.background_color
 
-    obj, intersection_point, reflection_ray = get_closest_object(
-        source, ray_vec, objects, curr_object
-    )
+    obj, intersection_point = get_closest_object(source, ray_vec, objects, curr_object)
     if not obj:
         return scene_settings.background_color
 
@@ -23,21 +21,19 @@ def get_color(source, ray_vec, objects, scene_settings, curr_object=None, iterat
 def get_closest_object(source, ray_vec, objects, curr_object):
     closest_obj = None
     closest_intersection_point = None
-    closest_reflection_ray_vec = None
     min_dist = float("inf")
 
     for obj in objects:
         if obj == curr_object:
             continue
 
-        intersection_point, dist, reflection_ray = obj.intersect(source, ray_vec)
+        intersection_point, dist = obj.intersect(source, ray_vec)
         if dist and dist < min_dist:
             closest_obj = obj
             closest_intersection_point = intersection_point
-            closest_reflection_ray_vec = reflection_ray
             min_dist = dist
 
-    return closest_obj, closest_intersection_point, closest_reflection_ray_vec
+    return closest_obj, closest_intersection_point
 
 
 def save_image(image_array):

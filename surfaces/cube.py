@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -11,7 +11,9 @@ class Cube(Surface):
         self.position = np.array(position)
         self.scale = scale
 
-    def intersect(self, source: np.ndarray, ray_vec: np.ndarray):
+    def intersect(
+        self, source: np.ndarray, ray_vec: np.ndarray
+    ) -> Tuple[np.ndarray, float]:
         """
         Return the intersection point and distance from the source to the
         intersection point, using the slab method.
@@ -43,7 +45,11 @@ class Cube(Surface):
         # calculate the intersection point and the distance from the source to the intersection point
         intersection = source + t * ray_vec
         distance = np.linalg.norm(intersection - source)
+        return intersection, distance
 
+    def reflection(
+        self, ray_vec: np.ndarray, distance: float, intersection: np.ndarray
+    ) -> np.ndarray:
         # Calculate the reflection vector
         reflection_ray_vec = np.zeros(3)
         for i in range(3):
@@ -54,4 +60,4 @@ class Cube(Surface):
             else:
                 reflection_ray_vec[i] = 0
 
-        return intersection, distance, reflection_ray_vec
+        return reflection_ray_vec
