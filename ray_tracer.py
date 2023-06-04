@@ -59,12 +59,12 @@ def main():
 
     # calculate image's center, towards vector, right vector and up vector and the ratio
     v_to = camera.look_at - camera.position
-    v_to = v_to / np.linalg.norm(v_to)
+    v_to /= np.linalg.norm(v_to)
     p_c = camera.position + (camera.screen_distance * v_to)
-    v_r = np.cross(v_to, camera.up_vector)
-    v_r = v_r / np.linalg.norm(v_r)
-    v_up = np.cross(v_r, camera.look_at)
-    v_up = v_up / np.linalg.norm(v_up)
+    v_right = np.cross(v_to, camera.up_vector)
+    v_right /= np.linalg.norm(v_right)
+    v_up = np.cross(v_right, camera.look_at)
+    v_up /= np.linalg.norm(v_up)
     ratio = camera.screen_width / args.width
 
     # calculate the color of each pixel
@@ -73,7 +73,7 @@ def main():
             # calculate the ray's vector and the point (p) on the screen
             p = (
                 p_c
-                + ((j - int(args.width / 2)) * ratio * v_r)
+                + ((j - int(args.width / 2)) * ratio * v_right)
                 - ((i - int(args.height / 2)) * ratio * v_up)
             )
             ray_vec = p - camera.position
