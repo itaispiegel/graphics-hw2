@@ -47,9 +47,7 @@ class Cube(Surface):
         distance = np.linalg.norm(intersection - source)
         return intersection, distance
 
-    def reflection(
-        self, ray_vec: np.ndarray, distance: float, intersection: np.ndarray
-    ) -> np.ndarray:
+    def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         # Calculate the reflection vector
         reflection_ray_vec = np.zeros(3)
         for i in range(3):

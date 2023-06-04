@@ -8,6 +8,8 @@ from light import Light
 from scene import SceneSettings, parse_scene_file
 from surfaces import Surface
 
+COLOR_CHANNELS = 3
+
 
 def get_color(
     source: np.ndarray,
@@ -15,19 +17,41 @@ def get_color(
     surfaces: List[Surface],
     lights: List[Light],
     scene_settings: SceneSettings,
-    curr_surface: Optional[Surface] = None,
+    source_surface: Optional[Surface] = None,
     iteration: int = 0,
 ):
     if iteration == scene_settings.max_recursions:
         return scene_settings.background_color
 
-    obj, intersection_point = get_closest_surface(
-        source, ray_vec, surfaces, curr_surface
+    surface, intersection_point = get_closest_surface(
+        source, ray_vec, surfaces, source_surface
     )
-    if not obj:
+    if not surface:
+        if not lights:
+            return np.zeros(COLOR_CHANNELS)
         return scene_settings.background_color
 
-    return (0, 0, 0)
+    # light_intensity = get_light_intensity(intersection_point, lights, source_surface)
+    # if light_intensity == 0:
+    #    return BLACK
+
+    color = np.zeros(COLOR_CHANNELS)
+    if surface.material.transparency < 1:
+        color += (surface.material.diffuse_color * surface.material.specular_color) * (
+            1.0 - surface.material.transparency
+        )
+    if surface.material.transparency > 0:
+        color += surface.material.transparency * get_color(
+            intersection_point,
+            ray_vec,
+            surfaces,
+            lights,
+            scene_settings,
+            surface,
+            iteration + 1,
+        )
+
+    return color
 
 
 # returns the closet surface to the source and the intersection point of the ray on object
@@ -73,7 +97,7 @@ def main():
     camera, scene_settings, surfaces, lights = parse_scene_file(args.scene_file)
 
     # TODO: Implement the ray tracer
-    image_array = np.zeros((args.height, args.width, 3))
+    image_array = np.zeros((args.height, args.width, COLOR_CHANNELS))
 
     # calculate image's center, towards vector, right vector and up vector and the ratio
     v_to = camera.look_at - camera.position
@@ -97,9 +121,7 @@ def main():
             ray_vec = p - camera.position
 
             # calculate the color of the pixel using ray tracing
-            image_array[i][j] = get_color(
-                camera.position, ray_vec, surfaces, lights, scene_settings
-            )
+            image_array[i][j] = get_color(p, ray_vec, surfaces, lights, scene_settings)
 
     # Save the output image
     save_image(image_array)

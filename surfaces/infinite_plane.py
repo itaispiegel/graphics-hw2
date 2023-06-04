@@ -29,9 +29,7 @@ class InfinitePlane(Surface):
         distance = np.linalg.norm(intersection - source)
         return intersection, distance
 
-    def reflection(
-        self, ray_vec: np.ndarray, distance: float, intersection: np.ndarray
-    ) -> np.ndarray:
+    def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         # Calculate the reflection vector
         reflection_ray_vec = ray_vec - 2 * ray_vec @ self.normal * self.normal
-        return intersection, distance, reflection_ray_vec
+        return reflection_ray_vec

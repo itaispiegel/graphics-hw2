@@ -17,7 +17,5 @@ class Surface:
         """
         raise NotImplementedError()
 
-    def reflection(
-        self, ray_vec: np.ndarray, distance: float, intersection: np.ndarray
-    ) -> np.ndarray:
+    def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         raise NotImplementedError()

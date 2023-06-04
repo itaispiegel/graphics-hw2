@@ -38,12 +38,10 @@ class Sphere(Surface):
         distance = np.linalg.norm(intersection - source)
         return intersection, distance
 
-    def reflection(
-        self, ray_vec: np.ndarray, distance: float, intersection: np.ndarray
-    ) -> np.ndarray:
+    def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         # Calculate the surface normal at the intersection point
         normal = (intersection - self.position) / self.radius
 
         # Calculate the reflection vector
         reflection_ray_vec = ray_vec - 2 * ray_vec @ normal * normal
-        return intersection, distance, reflection_ray_vec
+        return reflection_ray_vec
