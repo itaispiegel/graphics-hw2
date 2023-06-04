@@ -17,9 +17,7 @@ class InfinitePlane(Surface):
         """
         Return the intersection point and distance from the source to the intersection point.
         """
-        t = np.dot(self.normal, source - (self.normal * self.offset)) / np.dot(
-            self.normal, ray_vec
-        )
+        t = -(source @ self.normal + self.offset) / (ray_vec @ self.normal)
 
         # Check if intersection is behind the source (according to the ray's direction)
         # or if the ray is parallel to the plane
