@@ -1,42 +1,60 @@
 import argparse
+from typing import List, Optional
 
 import numpy as np
 from PIL import Image
 
-from scene import parse_scene_file
+from light import Light
+from scene import SceneSettings, parse_scene_file
+from surfaces import Surface
 
 
-def get_color(source, ray_vec, objects, scene_settings, curr_object=None, iteration=0):
+def get_color(
+    source: np.ndarray,
+    ray_vec: np.ndarray,
+    surfaces: List[Surface],
+    lights: List[Light],
+    scene_settings: SceneSettings,
+    curr_surface: Optional[Surface] = None,
+    iteration: int = 0,
+):
     if iteration == scene_settings.max_recursions:
         return scene_settings.background_color
 
-    obj, intersection_point = get_closest_object(source, ray_vec, objects, curr_object)
+    obj, intersection_point = get_closest_surface(
+        source, ray_vec, surfaces, curr_surface
+    )
     if not obj:
         return scene_settings.background_color
 
     return (0, 0, 0)
 
 
-# returns the closet object to the source and the intersection point of the ray on object
-def get_closest_object(source, ray_vec, objects, curr_object):
-    closest_obj = None
+# returns the closet surface to the source and the intersection point of the ray on object
+def get_closest_surface(
+    source: np.ndarray,
+    ray_vec: np.ndarray,
+    surfaces: List[Surface],
+    curr_surface: Surface,
+):
+    closest_surface = None
     closest_intersection_point = None
     min_dist = float("inf")
 
-    for obj in objects:
-        if obj == curr_object:
+    for surface in surfaces:
+        if surface == curr_surface:
             continue
 
-        intersection_point, dist = obj.intersect(source, ray_vec)
+        intersection_point, dist = surface.intersect(source, ray_vec)
         if dist and dist < min_dist:
-            closest_obj = obj
+            closest_surface = surface
             closest_intersection_point = intersection_point
             min_dist = dist
 
-    return closest_obj, closest_intersection_point
+    return closest_surface, closest_intersection_point
 
 
-def save_image(image_array):
+def save_image(image_array: np.ndarray):
     image = Image.fromarray(np.uint8(image_array))
 
     # Save the image to a file
@@ -52,7 +70,7 @@ def main():
     args = parser.parse_args()
 
     # Parse the scene file
-    camera, scene_settings, objects, lights = parse_scene_file(args.scene_file)
+    camera, scene_settings, surfaces, lights = parse_scene_file(args.scene_file)
 
     # TODO: Implement the ray tracer
     image_array = np.zeros((args.height, args.width, 3))
@@ -80,7 +98,7 @@ def main():
 
             # calculate the color of the pixel using ray tracing
             image_array[i][j] = get_color(
-                camera.position, ray_vec, objects, scene_settings
+                camera.position, ray_vec, surfaces, lights, scene_settings
             )
 
     # Save the output image
