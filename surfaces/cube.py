@@ -11,9 +11,7 @@ class Cube(Surface):
         self.position = np.array(position)
         self.scale = scale
 
-    def intersect(
-        self, source: np.ndarray, ray_vec: np.ndarray
-    ) -> Tuple[np.ndarray, float]:
+    def intersect(self, source: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         """
         Return the intersection point and distance from the source to the
         intersection point, using the slab method.
@@ -27,7 +25,7 @@ class Cube(Surface):
                     source[i] < self.position[i]
                     or source[i] > self.position[i] + self.scale
                 ):
-                    return None, None
+                    return None
             else:
                 t1 = (self.position[i] - source[i]) / ray_vec[i]
                 t2 = (self.position[i] + self.scale - source[i]) / ray_vec[i]
@@ -38,14 +36,12 @@ class Cube(Surface):
                 t_far = min(t_far, t2)
 
                 if t_near > t_far or t_far < 0:
-                    return None, None
+                    return None
 
         t = t_near if t_near >= 0 else t_far
 
-        # calculate the intersection point and the distance from the source to the intersection point
-        intersection = source + t * ray_vec
-        distance = np.linalg.norm(intersection - source)
-        return intersection, distance
+        # calculate the intersection point
+        return source + t * ray_vec
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         # Calculate the reflection vector
@@ -59,3 +55,8 @@ class Cube(Surface):
                 reflection_ray_vec[i] = 0
 
         return reflection_ray_vec
+
+    def light_hit(
+        self, light_source: np.ndarray, intersection_point: np.ndarray
+    ) -> bool:
+        raise NotImplementedError()

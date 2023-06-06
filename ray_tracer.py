@@ -31,27 +31,7 @@ def get_color(
             return np.zeros(COLOR_CHANNELS)
         return scene_settings.background_color
 
-    # light_intensity = get_light_intensity(intersection_point, lights, source_surface)
-    # if light_intensity == 0:
-    #    return BLACK
-
-    color = np.zeros(COLOR_CHANNELS)
-    if surface.material.transparency < 1:
-        color += (surface.material.diffuse_color * surface.material.specular_color) * (
-            1.0 - surface.material.transparency
-        )
-    if surface.material.transparency > 0:
-        color += surface.material.transparency * get_color(
-            intersection_point,
-            ray_vec,
-            surfaces,
-            lights,
-            scene_settings,
-            surface,
-            iteration + 1,
-        )
-
-    return color
+    return surface.material.diffuse_color * 255
 
 
 # returns the closet surface to the source and the intersection point of the ray on object
@@ -69,13 +49,61 @@ def get_closest_surface(
         if surface == curr_surface:
             continue
 
-        intersection_point, dist = surface.intersect(source, ray_vec)
-        if dist and dist < min_dist:
+        intersection_point = surface.intersect(source, ray_vec)
+        if intersection_point is None:
+            continue
+
+        dist = np.linalg.norm(intersection_point - source)
+        if dist < min_dist:
             closest_surface = surface
             closest_intersection_point = intersection_point
             min_dist = dist
 
     return closest_surface, closest_intersection_point
+
+
+def get_light_intensity(
+    surface: Surface,
+    light: Light,
+    scene_settings: SceneSettings,
+    intersection_point: np.ndarray,
+):
+    light_hit_cnt = 0
+
+    # get 2 vectors that are orthogonal to the normal vector
+    normal = intersection_point - light.position
+    fixed_vector = np.array([1, 1, 1])
+    vec1 = fixed_vector - np.cross(normal, fixed_vector) * normal
+    vec1 /= np.linalg.norm(vec1)
+    vec2 = np.cross(normal, vec1)
+    vec2 /= np.linalg.norm(vec2)
+
+    n = scene_settings.num_shadow_samples / 2.0
+    top_left = light.position - (n * vec1) - (n * vec2)
+
+    for i in range(scene_settings.num_shadow_samples):
+        for j in range(scene_settings.num_shadow_samples):
+            # get the corners of the square
+            corner1 = top_left + (i * light.radius * vec1) + (j * light.radius * vec2)
+            corner2 = (
+                top_left
+                + ((i + 1) * light.radius * vec1)
+                + ((j + 1) * light.radius * vec2)
+            )
+
+            # Calculate the minimum and maximum coordinates for each dimension
+            min_coords = np.minimum(corner1, corner2)
+            max_coords = np.maximum(corner1, corner2)
+
+            # Generate random coordinates within the square
+            light_source = np.random.uniform(min_coords, max_coords)
+            if surface.light_hit(light_source, intersection_point):
+                light_hit_cnt += 1
+
+    light_intensity = (1 - light.shadow_intensity) + light.shadow_intensity * (
+        light_hit_cnt / (scene_settings.num_shadow_samples**2)
+    )
+    return light_intensity
 
 
 def save_image(image_array: np.ndarray):
@@ -105,7 +133,7 @@ def main():
     p_c = camera.position + (camera.screen_distance * v_to)
     v_right = np.cross(v_to, camera.up_vector)
     v_right /= np.linalg.norm(v_right)
-    v_up = np.cross(v_right, camera.look_at)
+    v_up = np.cross(v_right, v_to)
     v_up /= np.linalg.norm(v_up)
     ratio = camera.screen_width / args.width
 
@@ -115,10 +143,11 @@ def main():
             # calculate the ray's vector and the point (p) on the screen
             p = (
                 p_c
-                + ((j - int(args.width / 2)) * ratio * v_right)
-                - ((i - int(args.height / 2)) * ratio * v_up)
+                + ((j - args.width // 2) * ratio * v_right)
+                - ((i - args.height // 2) * ratio * v_up)
             )
             ray_vec = p - camera.position
+            ray_vec /= np.linalg.norm(ray_vec)
 
             # calculate the color of the pixel using ray tracing
             image_array[i][j] = get_color(p, ray_vec, surfaces, lights, scene_settings)

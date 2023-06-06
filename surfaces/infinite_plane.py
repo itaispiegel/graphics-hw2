@@ -11,25 +11,23 @@ class InfinitePlane(Surface):
         self.normal = np.array(normal)
         self.offset = offset
 
-    def intersect(
-        self, source: np.ndarray, ray_vec: np.ndarray
-    ) -> Tuple[np.ndarray, float]:
+    def intersect(self, source: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         """
         Return the intersection point and distance from the source to the intersection point.
         """
-        t = -(source @ self.normal + self.offset) / (ray_vec @ self.normal)
+        denom = np.dot(self.normal, ray_vec)
+        if abs(denom) < 1e-6:
+            return None
 
-        # Check if intersection is behind the source (according to the ray's direction)
-        # or if the ray is parallel to the plane
-        if t < 0:
-            return None, None
-
-        # calculate the intersection point and the distance from the source to the intersection point
-        intersection = source + t * ray_vec
-        distance = np.linalg.norm(intersection - source)
-        return intersection, distance
+        # Ray and plane are not parallel, so an intersection exists
+        t = (self.offset - np.dot(source, self.normal)) / denom
+        return source + t * ray_vec
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         # Calculate the reflection vector
-        reflection_ray_vec = ray_vec - 2 * ray_vec @ self.normal * self.normal
-        return reflection_ray_vec
+        return ray_vec - 2 * ray_vec @ self.normal * self.normal
+
+    def light_hit(
+        self, light_source: np.ndarray, intersection_point: np.ndarray
+    ) -> bool:
+        return True
