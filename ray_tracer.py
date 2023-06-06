@@ -1,58 +1,60 @@
 import argparse
+from typing import List, Optional
 
 import numpy as np
 from PIL import Image
 
-from camera import Camera
 from light import Light
-from material import Material
-from scene_settings import SceneSettings
-from surfaces.cube import Cube
-from surfaces.infinite_plane import InfinitePlane
-from surfaces.sphere import Sphere
+from scene import SceneSettings, parse_scene_file
+from surfaces import Surface
 
 
-def parse_scene_file(file_path):
-    objects = []
-    camera = None
-    scene_settings = None
-    with open(file_path, "r") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            parts = line.split()
-            obj_type = parts[0]
-            params = [float(p) for p in parts[1:]]
-            if obj_type == "cam":
-                camera = Camera(
-                    params[:3], params[3:6], params[6:9], params[9], params[10]
-                )
-            elif obj_type == "set":
-                scene_settings = SceneSettings(params[:3], params[3], params[4])
-            elif obj_type == "mtl":
-                material = Material(
-                    params[:3], params[3:6], params[6:9], params[9], params[10]
-                )
-                objects.append(material)
-            elif obj_type == "sph":
-                sphere = Sphere(params[:3], params[3], int(params[4]))
-                objects.append(sphere)
-            elif obj_type == "pln":
-                plane = InfinitePlane(params[:3], params[3], int(params[4]))
-                objects.append(plane)
-            elif obj_type == "box":
-                cube = Cube(params[:3], params[3], int(params[4]))
-                objects.append(cube)
-            elif obj_type == "lgt":
-                light = Light(params[:3], params[3:6], params[6], params[7], params[8])
-                objects.append(light)
-            else:
-                raise ValueError("Unknown object type: {}".format(obj_type))
-    return camera, scene_settings, objects
+def get_color(
+    source: np.ndarray,
+    ray_vec: np.ndarray,
+    surfaces: List[Surface],
+    lights: List[Light],
+    scene_settings: SceneSettings,
+    curr_surface: Optional[Surface] = None,
+    iteration: int = 0,
+):
+    if iteration == scene_settings.max_recursions:
+        return scene_settings.background_color
+
+    obj, intersection_point = get_closest_surface(
+        source, ray_vec, surfaces, curr_surface
+    )
+    if not obj:
+        return scene_settings.background_color
+
+    return (0, 0, 0)
 
 
-def save_image(image_array):
+# returns the closet surface to the source and the intersection point of the ray on object
+def get_closest_surface(
+    source: np.ndarray,
+    ray_vec: np.ndarray,
+    surfaces: List[Surface],
+    curr_surface: Surface,
+):
+    closest_surface = None
+    closest_intersection_point = None
+    min_dist = float("inf")
+
+    for surface in surfaces:
+        if surface == curr_surface:
+            continue
+
+        intersection_point, dist = surface.intersect(source, ray_vec)
+        if dist and dist < min_dist:
+            closest_surface = surface
+            closest_intersection_point = intersection_point
+            min_dist = dist
+
+    return closest_surface, closest_intersection_point
+
+
+def save_image(image_array: np.ndarray):
     image = Image.fromarray(np.uint8(image_array))
 
     # Save the image to a file
@@ -68,12 +70,36 @@ def main():
     args = parser.parse_args()
 
     # Parse the scene file
-    camera, scene_settings, objects = parse_scene_file(args.scene_file)
+    camera, scene_settings, surfaces, lights = parse_scene_file(args.scene_file)
 
     # TODO: Implement the ray tracer
+    image_array = np.zeros((args.height, args.width, 3))
 
-    # Dummy result
-    image_array = np.zeros((500, 500, 3))
+    # calculate image's center, towards vector, right vector and up vector and the ratio
+    v_to = camera.look_at - camera.position
+    v_to /= np.linalg.norm(v_to)
+    p_c = camera.position + (camera.screen_distance * v_to)
+    v_right = np.cross(v_to, camera.up_vector)
+    v_right /= np.linalg.norm(v_right)
+    v_up = np.cross(v_right, camera.look_at)
+    v_up /= np.linalg.norm(v_up)
+    ratio = camera.screen_width / args.width
+
+    # calculate the color of each pixel
+    for i in range(args.height):
+        for j in range(args.width):
+            # calculate the ray's vector and the point (p) on the screen
+            p = (
+                p_c
+                + ((j - int(args.width / 2)) * ratio * v_right)
+                - ((i - int(args.height / 2)) * ratio * v_up)
+            )
+            ray_vec = p - camera.position
+
+            # calculate the color of the pixel using ray tracing
+            image_array[i][j] = get_color(
+                camera.position, ray_vec, surfaces, lights, scene_settings
+            )
 
     # Save the output image
     save_image(image_array)
