@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 
@@ -25,19 +25,25 @@ class InfinitePlane(Surface):
         return source + t * ray_vec
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
+        normal = self.get_normal(intersection)
+
         # Calculate the reflection vector
-        return ray_vec - 2 * (ray_vec @ self.normal) * self.normal
+        reflection_vec = ray_vec - 2 * (ray_vec @ normal) * normal
+        return reflection_vec / np.linalg.norm(reflection_vec)
 
     def light_hit(
         self,
         light_source: np.ndarray,
-        intersection_point: np.ndarray,
+        intersection: np.ndarray,
         surfaces: List[Surface],
     ) -> bool:
-        light_vec = intersection_point - light_source
+        light_vec = intersection - light_source
         closest_surface, _ = get_closest_surface(
             light_source, light_vec, surfaces, None
         )
         if closest_surface == self:
             return True
         return False
+
+    def get_normal(self, intersection: np.ndarray) -> np.ndarray:
+        return self.normal / np.linalg.norm(self.normal)

@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 
@@ -45,28 +45,25 @@ class Cube(Surface):
         return source + t * ray_vec
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
-        # Calculate the reflection vector
-        reflection_ray_vec = np.zeros(3)
-        for i in range(3):
-            if abs(intersection[i] - self.position[i]) < 1e-10:
-                reflection_ray_vec[i] = -ray_vec[i]
-            elif abs(intersection[i] - (self.position[i] + self.scale)) < 1e-10:
-                reflection_ray_vec[i] = ray_vec[i]
-            else:
-                reflection_ray_vec[i] = 0
+        normal = self.get_normal(intersection)
 
-        return reflection_ray_vec
+        # Calculate the reflection vector
+        reflection_vec = ray_vec - 2 * (ray_vec @ normal) * normal
+        return reflection_vec / np.linalg.norm(reflection_vec)
 
     def light_hit(
         self,
         light_source: np.ndarray,
-        intersection_point: np.ndarray,
+        intersection: np.ndarray,
         surfaces: List[Surface],
     ) -> bool:
-        light_vec = intersection_point - light_source
+        light_vec = intersection - light_source
         _, light_intersection = get_closest_surface(
             light_source, light_vec, surfaces, None
         )
-        if np.allclose(intersection_point, light_intersection, atol=1e-5):
+        if np.allclose(intersection, light_intersection, atol=1e-5):
             return True
         return False
+
+    def get_normal(self, intersection: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()

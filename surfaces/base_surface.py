@@ -26,3 +26,6 @@ class Surface:
         surfaces: List[Surface],
     ) -> bool:
         raise NotImplementedError()
+
+    def get_normal(self, intersection: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
