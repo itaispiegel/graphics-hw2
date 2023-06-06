@@ -1,7 +1,8 @@
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 
+from . import Surface
 from .material import Material
 
 
@@ -19,6 +20,9 @@ class Surface:
         raise NotImplementedError()
 
     def light_hit(
-        self, light_source: np.ndarray, intersection_point: np.ndarray
+        self,
+        light_source: np.ndarray,
+        intersection_point: np.ndarray,
+        surfaces: List[Surface],
     ) -> bool:
         raise NotImplementedError()

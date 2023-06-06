@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+from ..utils import get_closest_surface
 from .base_surface import Material, Surface
 
 
@@ -57,6 +58,15 @@ class Cube(Surface):
         return reflection_ray_vec
 
     def light_hit(
-        self, light_source: np.ndarray, intersection_point: np.ndarray
+        self,
+        light_source: np.ndarray,
+        intersection_point: np.ndarray,
+        surfaces: List[Surface],
     ) -> bool:
-        raise NotImplementedError()
+        light_vec = intersection_point - light_source
+        _, light_intersection = get_closest_surface(
+            light_source, light_vec, surfaces, None
+        )
+        if np.allclose(intersection_point, light_intersection, atol=1e-5):
+            return True
+        return False

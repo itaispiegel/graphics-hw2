@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+from ..utils import get_closest_surface
 from .base_surface import Material, Surface
 
 
@@ -25,9 +26,18 @@ class InfinitePlane(Surface):
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         # Calculate the reflection vector
-        return ray_vec - 2 * ray_vec @ self.normal * self.normal
+        return ray_vec - 2 * (ray_vec @ self.normal) * self.normal
 
     def light_hit(
-        self, light_source: np.ndarray, intersection_point: np.ndarray
+        self,
+        light_source: np.ndarray,
+        intersection_point: np.ndarray,
+        surfaces: List[Surface],
     ) -> bool:
-        return True
+        light_vec = intersection_point - light_source
+        closest_surface, _ = get_closest_surface(
+            light_source, light_vec, surfaces, None
+        )
+        if closest_surface == self:
+            return True
+        return False
