@@ -25,6 +25,4 @@ class InfinitePlane(Surface):
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         dot = self.normal @ ray_vec
-        if dot > 0:
-            return self.normal
-        return -self.normal
+        return self.normal if dot > 0 else -self.normal
