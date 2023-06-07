@@ -3,7 +3,8 @@ import argparse
 import numpy as np
 from PIL import Image
 
-from colors import COLOR_CHANNELS, get_color
+from colors import get_color
+from consts import COLOR_CHANNELS
 from scene import parse_scene_file
 
 

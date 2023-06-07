@@ -2,9 +2,8 @@ from typing import List, Tuple
 
 import numpy as np
 
+from consts import EPSILON
 from material import Material
-
-EPSILON = 1e-5
 
 
 class Surface:
@@ -19,8 +18,6 @@ class Surface:
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
         normal = self.normal_at_point(intersection, ray_vec)
-
-        # Calculate the reflection vector
         reflection_vec = ray_vec - 2 * (ray_vec @ normal) * normal
         return reflection_vec / np.linalg.norm(reflection_vec)
 

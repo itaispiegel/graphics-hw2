@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 
 from base_surface import Material, Surface
-from colors import EPSILON
+from consts import EPSILON
 
 
 class InfinitePlane(Surface):

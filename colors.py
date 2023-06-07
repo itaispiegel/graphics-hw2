@@ -2,12 +2,10 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from base_surface import EPSILON, Surface, get_closest_surface
+from base_surface import Surface, get_closest_surface
+from consts import COLOR_SCALE, EPSILON
 from light import Light
 from scene import SceneSettings
-
-COLOR_CHANNELS = 3
-COLOR_SCALE = 255
 
 
 def get_color(
@@ -22,7 +20,7 @@ def get_color(
 ) -> np.ndarray:
     if iteration == scene_settings.max_recursions:
         if not lights:
-            return get_vector()
+            return vector()
         return scene_settings.background_color
 
     surface, intersection = get_closest_surface(
@@ -30,7 +28,7 @@ def get_color(
     )
     if not surface:
         if not lights:
-            return get_vector()
+            return vector()
         return scene_settings.background_color
 
     color = phong(source, intersection, surface, surfaces, lights, scene_settings) * (
@@ -61,7 +59,9 @@ def get_color(
             iteration + 1,
             True,
         )
-        if not np.array_equal(reflection_color, scene_settings.background_color):
+        if not np.allclose(
+            reflection_color, scene_settings.background_color, atol=EPSILON
+        ):
             color += reflection_color
 
     if is_reflection:
@@ -69,7 +69,7 @@ def get_color(
     return np.clip(color, 0, 1) * COLOR_SCALE
 
 
-def get_vector(x: float = 0.0, y: float = 0.0, z: float = 0.0) -> np.ndarray:
+def vector(x: float = 0.0, y: float = 0.0, z: float = 0.0) -> np.ndarray:
     return np.array([x, y, z], dtype=np.float64)
 
 
@@ -86,9 +86,9 @@ def get_light_intensity(
     # get 2 vectors that are orthogonal to the normal vector
     normal = intersection - light.position
     normal /= np.linalg.norm(normal)
-    fixed_vector = get_vector(x=1.0)
+    fixed_vector = vector(x=1.0)
     if np.allclose(normal, fixed_vector, atol=EPSILON):
-        fixed_vector = get_vector(y=1.0)
+        fixed_vector = vector(y=1.0)
     vec1 = np.cross(normal, fixed_vector)
     vec1 /= np.linalg.norm(vec1)
     vec2 = np.cross(normal, vec1)
@@ -99,11 +99,15 @@ def get_light_intensity(
     top_left = light.position - (half_w * vec1) - (half_w * vec2)
 
     # check if the light hits the surface from each square in the grid
-    r = light.radius / scene_settings.root_number_shadow_rays
+    grid_square_length = light.radius / scene_settings.root_number_shadow_rays
     for i in range(int(scene_settings.root_number_shadow_rays)):
         for j in range(int(scene_settings.root_number_shadow_rays)):
             # get the corners of the square
-            corner1 = top_left + (i * r * vec1) + (j * r * vec2)
+            corner1 = (
+                top_left
+                + (i * grid_square_length * vec1)
+                + (j * grid_square_length * vec2)
+            )
             corner2 = (
                 top_left
                 + ((i + 1) * light.radius * vec1)
@@ -133,7 +137,7 @@ def phong(
     lights: List[Light],
     scene_settings: SceneSettings,
 ) -> np.ndarray:
-    color = get_vector()
+    color = vector()
 
     for light in lights:
         if not surface.light_hit(light.position, intersection, surfaces):
