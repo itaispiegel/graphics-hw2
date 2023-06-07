@@ -2,12 +2,11 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from base_surface import Surface, get_closest_surface
+from base_surface import EPSILON, Surface, get_closest_surface
 from light import Light
 from scene import SceneSettings
 
 COLOR_CHANNELS = 3
-EPSILON = 1e-5
 
 
 def get_color(
@@ -34,9 +33,9 @@ def get_color(
 
     # return surface.material.diffuse_color * 255
 
-    color = phong(
-        source, intersection, surface, surfaces, lights, scene_settings, iteration
-    ) * (1 - surface.material.transparency)
+    color = phong(source, intersection, surface, surfaces, lights, scene_settings) * (
+        1 - surface.material.transparency
+    )
     if surface.material.transparency > 0:
         color += (
             get_color(
@@ -50,7 +49,7 @@ def get_color(
             )
             * surface.material.transparency
         )
-    is_reflective = True  # TODO: LEARN HOW TO CHECK IF A SURFACE IS REFLECTIVE
+    is_reflective = False  # TODO: LEARN HOW TO CHECK IF A SURFACE IS REFLECTIVE
     if is_reflective:
         color += (
             get_color(
@@ -65,6 +64,7 @@ def get_color(
             * surface.material.reflection_color
         )
 
+    print(color)
     return np.clip(color, 0, 1)
 
 
@@ -97,9 +97,9 @@ def get_light_intensity(
     top_left = light.position - (half_w * vec1) - (half_w * vec2)
 
     # check if the light hits the surface from each square in the grid
-    r = light.radius / scene_settings.num_shadow_samples
-    for i in range(scene_settings.num_shadow_samples):
-        for j in range(scene_settings.num_shadow_samples):
+    r = light.radius / scene_settings.root_number_shadow_rays
+    for i in range(int(scene_settings.root_number_shadow_rays)):
+        for j in range(int(scene_settings.root_number_shadow_rays)):
             # get the corners of the square
             corner1 = top_left + (i * r * vec1) + (j * r * vec2)
             corner2 = (
@@ -119,7 +119,7 @@ def get_light_intensity(
 
     # return the light intensity
     return (1 - light.shadow_intensity) + light.shadow_intensity * (
-        light_hit_cnt / (scene_settings.num_shadow_samples**2)
+        light_hit_cnt / (scene_settings.root_number_shadow_rays**2)
     )
 
 

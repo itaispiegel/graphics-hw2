@@ -2,8 +2,9 @@ from typing import List, Tuple
 
 import numpy as np
 
-from colors import EPSILON
 from material import Material
+
+EPSILON = 1e-5
 
 
 class Surface:
