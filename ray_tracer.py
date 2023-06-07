@@ -52,7 +52,9 @@ def main():
 
             # calculate the color of the pixel using ray tracing
             image_array[i][j] = get_color(p, ray_vec, surfaces, lights, scene_settings)
-            print(f"Pixel: {i},{j} - color: {image_array[i][j][0]} {image_array[i][j][1]} {image_array[i][j][2]}")
+            print(
+                f"Pixel: {i},{j} - color: {image_array[i][j][0]} {image_array[i][j][1]} {image_array[i][j][2]}"
+            )
 
     # Save the output image
     save_image(image_array, args.output_image)

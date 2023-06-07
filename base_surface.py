@@ -18,7 +18,7 @@ class Surface:
         raise NotImplementedError()
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
-        normal = self.normal_at_point(intersection)
+        normal = self.normal_at_point(intersection, ray_vec)
 
         # Calculate the reflection vector
         reflection_vec = ray_vec - 2 * (ray_vec @ normal) * normal
@@ -36,10 +36,10 @@ class Surface:
         """
         light_vec = intersection - light_source
         _, light_intersection = get_closest_surface(light_source, light_vec, surfaces)
-        
-        return np.allclose(intersection, light_intersection, atol=EPSILON) 
 
-    def normal_at_point(self, point: np.ndarray) -> np.ndarray:
+        return np.allclose(intersection, light_intersection, atol=EPSILON)
+
+    def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         """
         Return the normal vector of the surface at the given point.
         """

@@ -18,7 +18,7 @@ def get_color(
     scene_settings: SceneSettings,
     source_surface: Optional[Surface] = None,
     iteration: int = 0,
-    is_reflection: bool = False
+    is_reflection: bool = False,
 ) -> np.ndarray:
     if iteration == scene_settings.max_recursions:
         if not lights:
@@ -59,10 +59,10 @@ def get_color(
             scene_settings,
             surface,
             iteration + 1,
-            True
+            True,
         )
         if not np.array_equal(reflection_color, scene_settings.background_color):
-            color += reflection_color 
+            color += reflection_color
 
     if is_reflection:
         color *= surface.material.reflection_color
@@ -141,7 +141,7 @@ def phong(
 
         l_vec = light.position - intersection
         l_vec /= np.linalg.norm(l_vec)
-        normal = surface.normal_at_point(intersection)
+        normal = surface.normal_at_point(intersection, -l_vec)
         v_vec = source - intersection
         v_vec /= np.linalg.norm(v_vec)
         r_vec = surface.reflection(

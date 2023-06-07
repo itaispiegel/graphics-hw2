@@ -42,5 +42,5 @@ class Cube(Surface):
         # calculate the intersection point
         return source + t * ray_vec
 
-    def normal_at_point(self, point: np.ndarray) -> np.ndarray:
+    def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
