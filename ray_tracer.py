@@ -1,18 +1,17 @@
 import argparse
-from typing import List, Optional
 
 import numpy as np
 from PIL import Image
 
+from colors import COLOR_CHANNELS, get_color
 from scene import parse_scene_file
-from utils import COLOR_CHANNELS, get_color
 
 
-def save_image(image_array: np.ndarray):
+def save_image(image_array: np.ndarray, save_path: str) -> None:
     image = Image.fromarray(np.uint8(image_array))
 
     # Save the image to a file
-    image.save("scenes/Spheres.png")
+    image.save(save_path)
 
 
 def main():
@@ -55,7 +54,7 @@ def main():
             image_array[i][j] = get_color(p, ray_vec, surfaces, lights, scene_settings)
 
     # Save the output image
-    save_image(image_array)
+    save_image(image_array, args.output_image)
 
 
 if __name__ == "__main__":

@@ -2,11 +2,12 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
+from base_surface import Surface, get_closest_surface
 from light import Light
 from scene import SceneSettings
-from surfaces import Surface
 
 COLOR_CHANNELS = 3
+EPSILON = 1e-5
 
 
 def get_color(
@@ -20,7 +21,7 @@ def get_color(
 ) -> np.ndarray:
     if iteration == scene_settings.max_recursions:
         if not lights:
-            return get_black_color()
+            return get_vector()
         return scene_settings.background_color
 
     surface, intersection = get_closest_surface(
@@ -28,7 +29,7 @@ def get_color(
     )
     if not surface:
         if not lights:
-            return get_black_color()
+            return get_vector()
         return scene_settings.background_color
 
     # return surface.material.diffuse_color * 255
@@ -67,36 +68,8 @@ def get_color(
     return np.clip(color, 0, 1)
 
 
-def get_black_color() -> np.ndarray:
-    return np.zeros(COLOR_CHANNELS, dtype=np.float64)
-
-
-# returns the closet surface to the source and the intersection point of the ray on object
-def get_closest_surface(
-    source: np.ndarray,
-    ray_vec: np.ndarray,
-    surfaces: List[Surface],
-    curr_surface: Surface,
-) -> Tuple[Surface, np.ndarray]:
-    closest_surface = None
-    closest_intersection = None
-    min_dist = float("inf")
-
-    for surface in surfaces:
-        if surface == curr_surface:
-            continue
-
-        intersection = surface.intersect(source, ray_vec)
-        if intersection is None:
-            continue
-
-        dist = np.linalg.norm(intersection - source)
-        if dist < min_dist:
-            closest_surface = surface
-            closest_intersection = intersection
-            min_dist = dist
-
-    return closest_surface, closest_intersection
+def get_vector(x: float = 0.0, y: float = 0.0, z: float = 0.0) -> np.ndarray:
+    return np.array([x, y, z], dtype=np.float64)
 
 
 def get_light_intensity(
@@ -110,15 +83,18 @@ def get_light_intensity(
 
     # get 2 vectors that are orthogonal to the normal vector
     normal = intersection - light.position
-    fixed_vector = np.array([1, 1, 1])
-    vec1 = fixed_vector - np.cross(normal, fixed_vector) * normal
+    normal /= np.linalg.norm(normal)
+    fixed_vector = get_vector(x=1.0)
+    if np.allclose(normal, fixed_vector, atol=EPSILON):
+        fixed_vector = get_vector(y=1.0)
+    vec1 = np.cross(normal, fixed_vector)
     vec1 /= np.linalg.norm(vec1)
     vec2 = np.cross(normal, vec1)
     vec2 /= np.linalg.norm(vec2)
 
     # get the top left corner of the grid
-    n = light.radius / 2.0
-    top_left = light.position - (n * vec1) - (n * vec2)
+    half_w = light.radius / 2.0
+    top_left = light.position - (half_w * vec1) - (half_w * vec2)
 
     # check if the light hits the surface from each square in the grid
     r = light.radius / scene_settings.num_shadow_samples
@@ -155,7 +131,7 @@ def phong(
     lights: List[Light],
     scene_settings: SceneSettings,
 ) -> np.ndarray:
-    color = get_black_color()
+    color = get_vector()
 
     for light in lights:
         if not surface.light_hit(light.position, intersection, surfaces):
@@ -163,7 +139,7 @@ def phong(
 
         l_vec = light.position - intersection
         l_vec /= np.linalg.norm(l_vec)
-        normal = surface.get_normal(intersection)
+        normal = surface.normal_at_point(intersection)
         v_vec = source - intersection
         v_vec /= np.linalg.norm(v_vec)
         r_vec = surface.reflection(
