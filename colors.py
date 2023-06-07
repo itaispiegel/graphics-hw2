@@ -7,6 +7,7 @@ from light import Light
 from scene import SceneSettings
 
 COLOR_CHANNELS = 3
+COLOR_SCALE = 255
 
 
 def get_color(
@@ -17,6 +18,7 @@ def get_color(
     scene_settings: SceneSettings,
     source_surface: Optional[Surface] = None,
     iteration: int = 0,
+    is_reflection: bool = False
 ) -> np.ndarray:
     if iteration == scene_settings.max_recursions:
         if not lights:
@@ -30,8 +32,6 @@ def get_color(
         if not lights:
             return get_vector()
         return scene_settings.background_color
-
-    # return surface.material.diffuse_color * 255
 
     color = phong(source, intersection, surface, surfaces, lights, scene_settings) * (
         1 - surface.material.transparency
@@ -49,23 +49,24 @@ def get_color(
             )
             * surface.material.transparency
         )
-    is_reflective = False  # TODO: LEARN HOW TO CHECK IF A SURFACE IS REFLECTIVE
+    is_reflective = True  # TODO: LEARN HOW TO CHECK IF A SURFACE IS REFLECTIVE
     if is_reflective:
-        color += (
-            get_color(
-                intersection,
-                surface.reflection(ray_vec, intersection),
-                surfaces,
-                lights,
-                scene_settings,
-                surface,
-                iteration + 1,
-            )
-            * surface.material.reflection_color
+        reflection_color = get_color(
+            intersection,
+            surface.reflection(ray_vec, intersection),
+            surfaces,
+            lights,
+            scene_settings,
+            surface,
+            iteration + 1,
+            True
         )
+        if not np.array_equal(reflection_color, scene_settings.background_color):
+            color += reflection_color 
 
-    print(color)
-    return np.clip(color, 0, 1)
+    if is_reflection:
+        color *= surface.material.reflection_color
+    return np.clip(color, 0, 1) * COLOR_SCALE
 
 
 def get_vector(x: float = 0.0, y: float = 0.0, z: float = 0.0) -> np.ndarray:
@@ -79,6 +80,7 @@ def get_light_intensity(
     scene_settings: SceneSettings,
     intersection: np.ndarray,
 ) -> float:
+    return 0.5
     light_hit_cnt = 0
 
     # get 2 vectors that are orthogonal to the normal vector

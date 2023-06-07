@@ -36,7 +36,8 @@ class Surface:
         """
         light_vec = intersection - light_source
         _, light_intersection = get_closest_surface(light_source, light_vec, surfaces)
-        return np.allclose(intersection, light_intersection, atol=EPSILON)
+        
+        return np.allclose(intersection, light_intersection, atol=EPSILON) 
 
     def normal_at_point(self, point: np.ndarray) -> np.ndarray:
         """

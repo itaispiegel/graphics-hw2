@@ -23,5 +23,8 @@ class InfinitePlane(Surface):
         t = (self.offset - np.dot(source, self.normal)) / denom
         return source + t * ray_vec
 
-    def normal_at_point(self, point: np.ndarray) -> np.ndarray:
-        return self.normal
+    def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
+        dot = self.normal @ ray_vec
+        if dot > 0:
+            return self.normal
+        return -self.normal
