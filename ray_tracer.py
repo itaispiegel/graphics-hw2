@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 
 from colors import get_color
-from consts import COLOR_CHANNELS
+from consts import COLOR_CHANNELS, COLOR_SCALE
 from scene import parse_scene_file
 
 
@@ -52,7 +52,8 @@ def main():
             ray_vec /= np.linalg.norm(ray_vec)
 
             # calculate the color of the pixel using ray tracing
-            image_array[i][j] = get_color(p, ray_vec, surfaces, lights, scene_settings)
+            color = get_color(p, ray_vec, surfaces, lights, scene_settings)
+            image_array[i][j] = np.clip(color, 0, 1) * COLOR_SCALE
             print(
                 f"Pixel: {i},{j} - color: {image_array[i][j][0]} {image_array[i][j][1]} {image_array[i][j][2]}"
             )

@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from base_surface import Surface, get_closest_surface
-from consts import COLOR_SCALE, EPSILON
+from consts import EPSILON
 from light import Light
 from scene import SceneSettings
 
@@ -19,16 +19,12 @@ def get_color(
     is_reflection: bool = False,
 ) -> np.ndarray:
     if iteration == scene_settings.max_recursions:
-        if not lights:
-            return vector()
         return scene_settings.background_color
 
     surface, intersection = get_closest_surface(
         source, ray_vec, surfaces, source_surface
     )
     if not surface:
-        if not lights:
-            return vector()
         return scene_settings.background_color
 
     color = phong(source, intersection, surface, surfaces, lights, scene_settings) * (
@@ -47,8 +43,7 @@ def get_color(
             )
             * surface.material.transparency
         )
-    is_reflective = True  # TODO: LEARN HOW TO CHECK IF A SURFACE IS REFLECTIVE
-    if is_reflective:
+    if surface.material.reflection_color != vector():
         reflection_color = get_color(
             intersection,
             surface.reflection(ray_vec, intersection),
@@ -66,7 +61,7 @@ def get_color(
 
     if is_reflection:
         color *= surface.material.reflection_color
-    return np.clip(color, 0, 1) * COLOR_SCALE
+    return color
 
 
 def vector(x: float = 0.0, y: float = 0.0, z: float = 0.0) -> np.ndarray:
