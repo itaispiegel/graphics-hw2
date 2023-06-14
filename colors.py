@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from base_surface import Surface, get_closest_surface
-from consts import EPSILON, COLOR_CHANNELS
+from consts import COLOR_CHANNELS, EPSILON
 from light import Light
 from scene import SceneSettings
 
@@ -43,15 +43,18 @@ def get_color(
             * surface.material.transparency
         )
     if surface.material.reflection_color != np.zeros(COLOR_CHANNELS, dtype=np.float64):
-        color += get_color(
-            intersection,
-            surface.reflection(ray_vec, intersection),
-            surfaces,
-            lights,
-            scene_settings,
-            surface,
-            iteration + 1,
-        ) * surface.material.reflection_color
+        color += (
+            get_color(
+                intersection,
+                surface.reflection(ray_vec, intersection),
+                surfaces,
+                lights,
+                scene_settings,
+                surface,
+                iteration + 1,
+            )
+            * surface.material.reflection_color
+        )
 
     return color
 
