@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from base_surface import Surface, get_closest_surface
-from consts import EPSILON
+from consts import EPSILON, COLOR_CHANNELS
 from light import Light
 from scene import SceneSettings
 
@@ -16,7 +16,6 @@ def get_color(
     scene_settings: SceneSettings,
     source_surface: Optional[Surface] = None,
     iteration: int = 0,
-    is_reflection: bool = False,
 ) -> np.ndarray:
     if iteration == scene_settings.max_recursions:
         return scene_settings.background_color
@@ -43,8 +42,8 @@ def get_color(
             )
             * surface.material.transparency
         )
-    if surface.material.reflection_color != vector():
-        reflection_color = get_color(
+    if surface.material.reflection_color != np.zeros(COLOR_CHANNELS, dtype=np.float64):
+        color += get_color(
             intersection,
             surface.reflection(ray_vec, intersection),
             surfaces,
@@ -52,20 +51,9 @@ def get_color(
             scene_settings,
             surface,
             iteration + 1,
-            True,
-        )
-        if not np.allclose(
-            reflection_color, scene_settings.background_color, atol=EPSILON
-        ):
-            color += reflection_color
+        ) * surface.material.reflection_color
 
-    if is_reflection:
-        color *= surface.material.reflection_color
     return color
-
-
-def vector(x: float = 0.0, y: float = 0.0, z: float = 0.0) -> np.ndarray:
-    return np.array([x, y, z], dtype=np.float64)
 
 
 def get_light_intensity(
@@ -95,8 +83,8 @@ def get_light_intensity(
 
     # check if the light hits the surface from each square in the grid
     grid_square_length = light.radius / scene_settings.root_number_shadow_rays
-    for i in range(int(scene_settings.root_number_shadow_rays)):
-        for j in range(int(scene_settings.root_number_shadow_rays)):
+    for i in range(scene_settings.root_number_shadow_rays):
+        for j in range(scene_settings.root_number_shadow_rays):
             # get the corners of the square
             corner1 = (
                 top_left
@@ -115,7 +103,7 @@ def get_light_intensity(
 
             # Generate random coordinates within the square
             light_source = np.random.uniform(min_coords, max_coords)
-            if curr_surface.light_hit(light_source, intersection, surfaces):
+            if curr_surface.is_path_clear(light_source, intersection, surfaces):
                 light_hit_cnt += 1
 
     # return the light intensity
@@ -132,10 +120,10 @@ def phong(
     lights: List[Light],
     scene_settings: SceneSettings,
 ) -> np.ndarray:
-    color = vector()
+    color = np.zeros(COLOR_CHANNELS, dtype=np.float64)
 
     for light in lights:
-        if not surface.light_hit(light.position, intersection, surfaces):
+        if not surface.is_path_clear(light.position, intersection, surfaces):
             continue
 
         l_vec = light.position - intersection

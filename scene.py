@@ -18,7 +18,7 @@ class SceneSettings:
         max_recursions: float,
     ):
         self.background_color = np.array(background_color)
-        self.root_number_shadow_rays = root_number_shadow_rays
+        self.root_number_shadow_rays = int(root_number_shadow_rays)
         self.max_recursions = max_recursions
 
 
