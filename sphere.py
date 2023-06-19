@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
 from base_surface import Material, Surface
+from ray import Ray
 
 
 class Sphere(Surface):
@@ -11,14 +12,14 @@ class Sphere(Surface):
         self.position = np.array(position)
         self.radius = radius
 
-    def intersect(self, source: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
+    def intersect(self, ray: Ray) -> Optional[np.ndarray]:
         """
         Return the intersection point and distance from the source to the intersection point
         using the algebraic method shown in class.
         """
-        oc = source - self.position
-        a = ray_vec @ ray_vec
-        b = 2.0 * oc @ ray_vec
+        oc = ray.source - self.position
+        a = ray.direction @ ray.direction
+        b = 2.0 * oc @ ray.direction
         c = oc @ oc - self.radius**2
 
         discriminant = b**2 - 4 * a * c
@@ -31,7 +32,7 @@ class Sphere(Surface):
             return None
         t = t1 if t1 >= 0 else t2
 
-        return source + t * ray_vec
+        return ray.at(t)
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         normal = point - self.position

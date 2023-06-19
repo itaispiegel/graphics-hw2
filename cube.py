@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
 from base_surface import Material, Surface
+from ray import Ray
 
 
 class Cube(Surface):
@@ -11,7 +12,7 @@ class Cube(Surface):
         self.position = np.array(position)
         self.scale = scale
 
-    def intersect(self, source: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
+    def intersect(self, ray: Ray) -> Optional[np.ndarray]:
         """
         Return the intersection point using the slab method.
         """
@@ -19,15 +20,15 @@ class Cube(Surface):
         t_far = float("inf")
 
         for i in range(3):
-            if ray_vec[i] == 0:
+            if ray.direction[i] == 0:
                 if (
-                    source[i] < self.position[i]
-                    or source[i] > self.position[i] + self.scale
+                    ray.source[i] < self.position[i]
+                    or ray.source[i] > self.position[i] + self.scale
                 ):
                     return None
             else:
-                t1 = (self.position[i] - source[i]) / ray_vec[i]
-                t2 = (self.position[i] + self.scale - source[i]) / ray_vec[i]
+                t1 = (self.position[i] - ray.source[i]) / ray.ray_vec[i]
+                t2 = (self.position[i] + self.scale - ray.source[i]) / ray.ray_vec[i]
                 if t1 > t2:
                     t1, t2 = t2, t1
 
@@ -38,9 +39,7 @@ class Cube(Surface):
                     return None
 
         t = t_near if t_near >= 0 else t_far
-
-        # calculate the intersection point
-        return source + t * ray_vec
+        return ray.at(t)
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
