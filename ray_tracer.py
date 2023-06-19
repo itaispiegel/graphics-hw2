@@ -1,10 +1,12 @@
 import argparse
+import itertools
 
 import numpy as np
 from PIL import Image
 
 from colors import get_color
 from consts import COLOR_CHANNELS, COLOR_SCALE
+from progressbar import progressbar
 from scene import parse_scene_file
 
 
@@ -33,21 +35,24 @@ def main():
     v_up /= np.linalg.norm(v_up)
     ratio = camera.screen_width / args.width
 
-    for i in range(args.height):
-        for j in range(args.width):
-            p = (
-                p_c
-                + ((j - args.width // 2) * ratio * v_right)
-                - ((i - args.height // 2) * ratio * v_up)
-            )
-            ray_vec = p - camera.position
-            ray_vec /= np.linalg.norm(ray_vec)
+    for i, j in progressbar(
+        itertools.product(range(args.height), range(args.width)),
+        count=args.height * args.width,
+        prefix="Computing: ",
+    ):
+        p = (
+            p_c
+            + ((j - args.width // 2) * ratio * v_right)
+            - ((i - args.height // 2) * ratio * v_up)
+        )
+        ray_vec = p - camera.position
+        ray_vec /= np.linalg.norm(ray_vec)
 
-            color = get_color(p, ray_vec, surfaces, lights, scene_settings)
-            image_array[i][j] = np.clip(color, 0, 1) * COLOR_SCALE
-            print(
-                f"Pixel: {i},{j} - color: {image_array[i][j][0]} {image_array[i][j][1]} {image_array[i][j][2]}"
-            )
+        color = get_color(p, ray_vec, surfaces, lights, scene_settings)
+        image_array[i][j] = np.clip(color, 0, 1) * COLOR_SCALE
+        print(
+            f"Pixel: {i},{j} - color: {image_array[i][j][0]} {image_array[i][j][1]} {image_array[i][j][2]}"
+        )
 
     save_image(image_array, args.output_image)
 
