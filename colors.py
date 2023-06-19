@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 
@@ -21,7 +21,7 @@ def get_color(
         return scene_settings.background_color
 
     surface, intersection = get_closest_surface(
-        source, ray_vec, surfaces, source_surface
+        source, ray_vec, surfaces, source_surface=source_surface
     )
     if not surface:
         return scene_settings.background_color
@@ -42,7 +42,7 @@ def get_color(
             )
             * surface.material.transparency
         )
-    if surface.material.reflection_color != np.zeros(COLOR_CHANNELS, dtype=np.float64):
+    if surface.material.is_reflective():
         color += (
             get_color(
                 intersection,

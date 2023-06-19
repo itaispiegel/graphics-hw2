@@ -31,7 +31,6 @@ class Sphere(Surface):
             return None
         t = t1 if t1 >= 0 else t2
 
-        # calculate the intersection point and the distance from the source to the intersection point
         return source + t * ray_vec
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:

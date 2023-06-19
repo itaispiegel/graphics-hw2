@@ -17,6 +17,9 @@ class Surface:
         raise NotImplementedError()
 
     def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
+        """
+        Receive the ray vector and intersection point on the surface, and return the reflection vector.
+        """
         normal = self.normal_at_point(intersection, ray_vec)
         reflection_vec = ray_vec - 2 * (ray_vec @ normal) * normal
         return reflection_vec / np.linalg.norm(reflection_vec)
@@ -32,7 +35,9 @@ class Surface:
         without hitting any other surface on the way.
         """
         light_vec = dest - source
-        _, light_intersection = get_closest_surface(source, light_vec, surfaces, self)
+        _, light_intersection = get_closest_surface(
+            source, light_vec, surfaces, source_surface=self
+        )
 
         return np.allclose(dest, light_intersection, atol=EPSILON)
 
@@ -43,19 +48,28 @@ class Surface:
         raise NotImplementedError()
 
 
-# returns the closet surface to the source and the intersection point of the ray on object
 def get_closest_surface(
     source: np.ndarray,
     ray_vec: np.ndarray,
     surfaces: List[Surface],
-    curr_surface: Surface = None,
+    source_surface: Surface = None,
 ) -> Tuple[Surface, np.ndarray]:
+    """
+    Receive a source point, a ray vector and the list of surfaces, and return a pair of the
+    closest surface and its intersection point with the ray.
+    :param source: The source point.
+    :param ray_vec: The ray vector shot from the source.
+    :param surfaces: A list of the surfaces in the scene.
+    :param source_surface: An optional parameter indicating the surface, the ray is shot from.
+    This surface will be ignored when searching for the closest surface.
+    :returns: A pair of the closest surface and the intersection point.
+    """
     closest_surface = None
     closest_intersection = None
     min_dist = float("inf")
 
     for surface in surfaces:
-        if surface == curr_surface:
+        if surface == source_surface:
             continue
 
         intersection = surface.intersect(source, ray_vec)
