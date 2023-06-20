@@ -57,13 +57,32 @@ def get_color(
     return color
 
 
+def is_path_clear(
+    source: np.ndarray,
+    dest: np.ndarray,
+    surfaces: List["Surface"],
+) -> bool:
+    """
+    Returns true iff the light source hits the surface at the intersection point
+    without hitting any other surface on the way.
+    This method expectes the dest to be on the surface
+    and the source to be a light source.
+    """
+    light_ray = Ray.ray_between_points(source, dest)
+    _, light_intersection = get_closest_surface(light_ray, surfaces)
+
+    return light_intersection is None or np.allclose(dest, light_intersection, atol=EPSILON)
+    
+
 def get_light_intensity(
-    curr_surface: Surface,
     surfaces: List[Surface],
     light: Light,
     scene_settings: SceneSettings,
     intersection: np.ndarray,
 ) -> float:
+    if not is_path_clear(light.position, intersection, surfaces):
+        return 1.0 - light.shadow_intensity
+    
     light_hit_cnt = 0
 
     # get 2 vectors that are orthogonal to the normal vector
@@ -103,7 +122,7 @@ def get_light_intensity(
             # Generate random coordinates within the square
             light_source = np.random.uniform(min_coords, max_coords)
 
-            if curr_surface.is_path_clear(light_source, intersection, surfaces):
+            if is_path_clear(light_source, intersection, surfaces):
                 light_hit_cnt += 1
 
     # return the light intensity
@@ -130,13 +149,9 @@ def phong(
             -l.direction, intersection
         )  # the reflection method needs a vector FROM the source TO the intersection
 
-        if surface.is_path_clear(light.position, intersection, surfaces):
-            light_intensity = get_light_intensity(
-                surface, surfaces, light, scene_settings, intersection
-            )
-        else:
-            light_intensity = 1.0 - light.shadow_intensity
-
+        light_intensity = get_light_intensity(
+            surfaces, light, scene_settings, intersection
+        )
         diffuse = surface.material.diffuse_color * (normal @ l.direction)
         specular = (
             surface.material.specular_color

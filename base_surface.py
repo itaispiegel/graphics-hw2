@@ -25,23 +25,6 @@ class Surface:
         reflection_vec = ray_vec - 2 * (ray_vec @ normal) * normal
         return reflection_vec / np.linalg.norm(reflection_vec)
 
-    def is_path_clear(
-        self,
-        source: np.ndarray,
-        dest: np.ndarray,
-        surfaces: List["Surface"],
-    ) -> bool:
-        """
-        Returns true iff the light source hits the surface at the intersection point
-        without hitting any other surface on the way.
-        This method expectes the dest to be on the surface
-        and the source to be a light source.
-        """
-        light_ray = Ray.ray_between_points(source, dest)
-        _, light_intersection = get_closest_surface(light_ray, surfaces)
-
-        return light_intersection is None or np.allclose(dest, light_intersection, atol=EPSILON)
-
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         """
         Return the normal vector of the surface at the given point.
