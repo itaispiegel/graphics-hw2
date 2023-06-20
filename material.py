@@ -14,7 +14,7 @@ class Material:
     ):
         self.diffuse_color = np.array(diffuse_color)
         self.specular_color = np.array(specular_color)
-        self.reflection_color = reflection_color
+        self.reflection_color = np.array(reflection_color)
         self.shininess = shininess
         self.transparency = transparency
 
@@ -23,4 +23,4 @@ class Material:
         Return True iff the material is reflective.
         A material is considered reflective, if its reflection color isn't black.
         """
-        return np.any(self.reflection_color != 0)
+        return np.any(self.reflection_color != 0.0)

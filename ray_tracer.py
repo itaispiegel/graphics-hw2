@@ -41,7 +41,7 @@ class RayTracer:
         ratio = self.camera.screen_width / width
         p = (
             self.p_c
-            + ((j - width // 2) * ratio * self.v_right)
+            - ((j - width // 2) * ratio * self.v_right)
             - ((i - height // 2) * ratio * self.v_up)
         )
         return Ray.ray_between_points(self.camera.position, p)
