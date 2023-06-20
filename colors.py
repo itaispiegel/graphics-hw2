@@ -130,7 +130,7 @@ def phong(
         normal = surface.normal_at_point(intersection, -l.direction)
         r_vec = surface.reflection(
             -l.direction, intersection
-        )  # the reflection methods need a vector FROM the source TO the intersection
+        )  # the reflection method needs a vector FROM the source TO the intersection
 
         if surface.is_path_clear(light.position, intersection, surfaces):
             light_intensity = get_light_intensity(

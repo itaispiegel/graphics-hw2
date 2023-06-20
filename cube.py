@@ -11,7 +11,7 @@ NORMAL_TUPLE = (
     np.array([0, 1, 0], dtype=np.float64),
     np.array([0, -1, 0], dtype=np.float64),
     np.array([0, 0, 1], dtype=np.float64),
-    np.array([0, 0, -1], dtype=np.float64),
+    np.array([0, 0, -1], dtype=np.float64)
 )
 
 
@@ -51,6 +51,7 @@ class Cube(Surface):
         return ray.at(t)
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
+        # we are assuming that the point is on the surface of the cube
         closest_normal = None
         closest_dist = float("inf")
 
