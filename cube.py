@@ -5,6 +5,15 @@ import numpy as np
 from base_surface import Material, Surface
 from ray import Ray
 
+NORMAL_TUPLE = (
+    np.array([1, 0, 0], dtype=np.float64),
+    np.array([-1, 0, 0], dtype=np.float64),
+    np.array([0, 1, 0], dtype=np.float64),
+    np.array([0, -1, 0], dtype=np.float64),
+    np.array([0, 0, 1], dtype=np.float64),
+    np.array([0, 0, -1], dtype=np.float64),
+)
+
 
 class Cube(Surface):
     def __init__(self, position: List[float], scale: float, material: Material):
@@ -42,4 +51,13 @@ class Cube(Surface):
         return ray.at(t)
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
-        raise NotImplementedError()
+        closest_normal = None
+        closest_dist = float("inf")
+
+        for normal in NORMAL_TUPLE:
+            dist = np.linalg.norm(point - (self.position + (normal * self.scale / 2.0)))
+            if dist < closest_dist:
+                closest_dist = dist
+                closest_normal = normal
+
+        return closest_normal

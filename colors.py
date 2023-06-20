@@ -77,10 +77,11 @@ def get_light_intensity(
     vec2 /= np.linalg.norm(vec2)
 
     # get the top left corner of the grid
-    top_left = light.position - (light.radius * vec1) - (light.radius * vec2)
+    half_w = light.radius / 2.0
+    top_left = light.position - (half_w * vec1) - (half_w * vec2)
 
     # check if the light hits the surface from each square in the grid
-    grid_square_length = (2.0 * light.radius) / scene_settings.root_number_shadow_rays
+    grid_square_length = light.radius / scene_settings.root_number_shadow_rays
     for i in range(scene_settings.root_number_shadow_rays):
         for j in range(scene_settings.root_number_shadow_rays):
             # get the corners of the square
@@ -124,9 +125,6 @@ def phong(
     color = np.zeros(COLOR_CHANNELS, dtype=np.float64)
 
     for light in lights:
-        if not surface.is_path_clear(light.position, intersection, surfaces):
-            continue
-
         l = Ray.ray_between_points(intersection, light.position)
         v = Ray.ray_between_points(intersection, source)
         normal = surface.normal_at_point(intersection, -l.direction)
@@ -134,17 +132,19 @@ def phong(
             -l.direction, intersection
         )  # the reflection methods need a vector FROM the source TO the intersection
 
-        light_intensity = get_light_intensity(
-            surface, surfaces, light, scene_settings, intersection
-        )
-        diffuse = surface.material.diffuse_color * light.color * (normal @ l.direction)
+        if surface.is_path_clear(light.position, intersection, surfaces):
+            light_intensity = get_light_intensity(
+                surface, surfaces, light, scene_settings, intersection
+            )
+        else:
+            light_intensity = 1.0 - light.shadow_intensity
+
+        diffuse = surface.material.diffuse_color * (normal @ l.direction)
         specular = (
             surface.material.specular_color
-            * light.color
             * light.specular_intensity
             * (r_vec @ v.direction) ** surface.material.shininess
         )
-
-        color += (diffuse + specular) * light_intensity
+        color += (diffuse + specular) * light.color * light_intensity
 
     return color
