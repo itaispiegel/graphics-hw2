@@ -25,7 +25,7 @@ def get_color(
     )
     if not surface:
         return scene_settings.background_color
-      
+
     color = phong(
         ray.source, intersection, surface, surfaces, lights, scene_settings
     ) * (1 - surface.material.transparency)
@@ -103,7 +103,7 @@ def get_light_intensity(
             light_source = np.array([0.0, 0.0, 0.0], dtype=np.float64)
             for i in range(COLOR_CHANNELS):
                 light_source[i] = np.random.uniform(min_coords[i], max_coords[i])
-            
+
             if curr_surface.is_path_clear(light_source, intersection, surfaces):
                 light_hit_cnt += 1
 
@@ -124,7 +124,7 @@ def phong(
     color = np.zeros(COLOR_CHANNELS, dtype=np.float64)
 
     for light in lights:
-        if not surface.is_path_clear(light.position, intersection, surfaces):           
+        if not surface.is_path_clear(light.position, intersection, surfaces):
             continue
 
         l = Ray.ray_between_points(intersection, light.position)
@@ -144,7 +144,7 @@ def phong(
             * light.specular_intensity
             * (r_vec @ v.direction) ** surface.material.shininess
         )
-        
+
         color += (diffuse + specular) * light_intensity
 
     return color
