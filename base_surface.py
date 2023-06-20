@@ -34,13 +34,13 @@ class Surface:
         """
         Returns true iff the light source hits the surface at the intersection point
         without hitting any other surface on the way.
+        This method expectes the dest to be on the surface
+        and the source to be a light source.
         """
         light_ray = Ray.ray_between_points(source, dest)
         _, light_intersection = get_closest_surface(light_ray, surfaces)
 
-        if light_intersection is None:
-            return True
-        return np.allclose(dest, light_intersection, atol=EPSILON)
+        return light_intersection is None or np.allclose(dest, light_intersection, atol=EPSILON)
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         """

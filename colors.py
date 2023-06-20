@@ -101,9 +101,7 @@ def get_light_intensity(
             max_coords = np.maximum(corner1, corner2)
 
             # Generate random coordinates within the square
-            light_source = np.array([0.0, 0.0, 0.0], dtype=np.float64)
-            for i in range(COLOR_CHANNELS):
-                light_source[i] = np.random.uniform(min_coords[i], max_coords[i])
+            light_source = np.random.uniform(min_coords, max_coords)
 
             if curr_surface.is_path_clear(light_source, intersection, surfaces):
                 light_hit_cnt += 1
