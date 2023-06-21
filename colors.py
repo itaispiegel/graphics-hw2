@@ -69,10 +69,11 @@ def is_path_clear(
     """
     light_ray = Ray.ray_between_points(source, dest)
     _, light_intersection = get_closest_surface(light_ray, surfaces)
-       
-    return light_intersection is None or np.allclose(
-        dest, light_intersection, atol=EPSILON
-    )
+    if light_intersection is None:
+        raise ValueError(
+            "Light source didn't hit any surface... THIS SHOULD NOT HAPPEN!"
+        )
+    return np.allclose(dest, light_intersection, atol=EPSILON)
 
 
 def get_light_intensity(
@@ -81,6 +82,14 @@ def get_light_intensity(
     scene_settings: SceneSettings,
     intersection: np.ndarray,
 ) -> float:
+    # if we need to produce hard shadows
+    if scene_settings.root_number_shadow_rays == 1:
+        return (
+            1.0
+            if is_path_clear(light.position, intersection, surfaces)
+            else 1.0 - light.shadow_intensity
+        )
+
     light_hit_cnt = 0
 
     # get 2 vectors that are orthogonal to the normal vector
@@ -94,8 +103,8 @@ def get_light_intensity(
     vec2 /= np.linalg.norm(vec2)
 
     # get the top left corner of the grid
-    half_w = light.radius / 2.0
-    top_left = light.position - (half_w * vec1) - (half_w * vec2)
+    half_r = light.radius / 2.0
+    top_left = light.position - (half_r * vec1) - (half_r * vec2)
 
     # check if the light hits the surface from each square in the grid
     grid_square_length = light.radius / scene_settings.root_number_shadow_rays

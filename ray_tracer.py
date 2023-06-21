@@ -54,6 +54,10 @@ class RayTracer:
             count=height * width,
             prefix="Computing: ",
         ):
+            # TEMP
+            if i < 222 or i > 265 or j < 140 or j > 207:
+                continue
+
             ray = self.construct_ray_through_pixel(height, width, i, j)
 
             color = get_color(
