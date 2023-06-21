@@ -65,8 +65,7 @@ def is_path_clear(
     """
     Returns true iff the light source hits the surface at the intersection point
     without hitting any other surface on the way.
-    This method expectes the dest to be on the surface
-    and the source to be a light source.
+    This method expects point dest to be on a surface and the source to be a light source.
     """
     light_ray = Ray.ray_between_points(source, dest)
     _, light_intersection = get_closest_surface(light_ray, surfaces)
@@ -79,10 +78,7 @@ def get_light_intensity(
     light: Light,
     scene_settings: SceneSettings,
     intersection: np.ndarray,
-) -> float:
-    if not is_path_clear(light.position, intersection, surfaces):
-        return 1.0 - light.shadow_intensity
-    
+) -> float:   
     light_hit_cnt = 0
 
     # get 2 vectors that are orthogonal to the normal vector
