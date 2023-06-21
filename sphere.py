@@ -28,11 +28,11 @@ class Sphere(Surface):
 
         t1 = (-b - np.sqrt(discriminant)) / (2 * a)
         t2 = (-b + np.sqrt(discriminant)) / (2 * a)
-        if t1 < 0 and t2 < 0:
-            return None
-        t = t1 if t1 >= 0 else t2
-
-        return ray.at(t)
+        if t1 >= 0 and t2 >= 0:
+            return ray.at(min(t1, t2))
+        
+        t = max(t1, t2)
+        return ray.at(t) if t >= 0 else None
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         normal = point - self.position

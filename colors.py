@@ -60,7 +60,7 @@ def get_color(
 def is_path_clear(
     source: np.ndarray,
     dest: np.ndarray,
-    surfaces: List["Surface"],
+    surfaces: List[Surface],
 ) -> bool:
     """
     Returns true iff the light source hits the surface at the intersection point
@@ -69,7 +69,7 @@ def is_path_clear(
     """
     light_ray = Ray.ray_between_points(source, dest)
     _, light_intersection = get_closest_surface(light_ray, surfaces)
-
+       
     return light_intersection is None or np.allclose(
         dest, light_intersection, atol=EPSILON
     )
@@ -154,7 +154,7 @@ def phong(
         specular = (
             surface.material.specular_color
             * light.specular_intensity
-            * (r_vec @ v.direction) ** surface.material.shininess
+            * (v.direction @ r_vec) ** surface.material.shininess
         )
         color += (diffuse + specular) * light.color * light_intensity
 
