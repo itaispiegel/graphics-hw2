@@ -11,7 +11,7 @@ NORMAL_TUPLE = (
     np.array([0, 1, 0], dtype=np.float64),
     np.array([0, -1, 0], dtype=np.float64),
     np.array([0, 0, 1], dtype=np.float64),
-    np.array([0, 0, -1], dtype=np.float64)
+    np.array([0, 0, -1], dtype=np.float64),
 )
 
 
