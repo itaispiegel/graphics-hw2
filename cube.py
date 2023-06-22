@@ -20,6 +20,7 @@ class Cube(Surface):
         super().__init__(material)
         self.position = np.array(position)
         self.scale = scale
+        self.half_scale = scale / 2.0
 
     def intersect(self, ray: Ray) -> Optional[np.ndarray]:
         """
@@ -31,13 +32,13 @@ class Cube(Surface):
         for i in range(3):
             if ray.direction[i] == 0:
                 if (
-                    ray.source[i] < self.position[i]
-                    or ray.source[i] > self.position[i] + self.scale
+                    ray.source[i] < self.position[i] - self.half_scale
+                    or ray.source[i] > self.position[i] + self.half_scale
                 ):
                     return None
             else:
-                t1 = (self.position[i] - ray.source[i]) / ray.direction[i]
-                t2 = (self.position[i] + self.scale - ray.source[i]) / ray.direction[i]
+                t1 = (self.position[i] - self.half_scale - ray.source[i]) / ray.direction[i]
+                t2 = (self.position[i] + self.half_scale - ray.source[i]) / ray.direction[i]
                 if t1 > t2:
                     t1, t2 = t2, t1
 
@@ -56,7 +57,7 @@ class Cube(Surface):
         closest_dist = float("inf")
 
         for normal in NORMAL_TUPLE:
-            dist = np.linalg.norm(point - (self.position + (normal * self.scale / 2.0)))
+            dist = np.linalg.norm(point - (self.position + (normal * self.half_scale)))
             if dist < closest_dist:
                 closest_dist = dist
                 closest_normal = normal
