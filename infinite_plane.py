@@ -22,7 +22,7 @@ class InfinitePlane(Surface):
 
         # Ray and plane are not parallel, so an intersection exists
         t = (self.offset - np.dot(ray.source, self.normal)) / denom
-        return ray.at(t)
+        return ray.at(t) if t >= 0 else None
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         dot = self.normal @ ray_vec

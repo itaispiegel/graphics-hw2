@@ -48,7 +48,7 @@ class Cube(Surface):
                     return None
 
         t = t_near if t_near >= 0 else t_far
-        return ray.at(t)
+        return ray.at(t) if t >= 0 else None
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         # we are assuming that the point is on the surface of the cube

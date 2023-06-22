@@ -41,7 +41,7 @@ class RayTracer:
         ratio = self.camera.screen_width / width
         p = (
             self.p_c
-            - ((j - width // 2) * ratio * self.v_right)
+            + ((j - width // 2) * ratio * self.v_right)
             - ((i - height // 2) * ratio * self.v_up)
         )
         return Ray.ray_between_points(self.camera.position, p)
@@ -54,10 +54,6 @@ class RayTracer:
             count=height * width,
             prefix="Computing: ",
         ):
-            # TEMP
-            if i < 222 or i > 265 or j < 140 or j > 207:
-                continue
-
             ray = self.construct_ray_through_pixel(height, width, i, j)
 
             color = get_color(

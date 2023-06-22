@@ -30,7 +30,7 @@ class Sphere(Surface):
         t2 = (-b + np.sqrt(discriminant)) / (2 * a)
         if t1 >= 0 and t2 >= 0:
             return ray.at(min(t1, t2))
-        
+
         t = max(t1, t2)
         return ray.at(t) if t >= 0 else None
 
