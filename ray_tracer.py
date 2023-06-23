@@ -63,9 +63,6 @@ class RayTracer:
                 self.scene_settings,
             )
             img_mat[i][j] = np.clip(color, 0, 1) * COLOR_SCALE
-            print(
-                f"Pixel: {i},{j} - color: {img_mat[i][j][0]} {img_mat[i][j][1]} {img_mat[i][j][2]}"
-            )
 
 
 def save_image(image_array: np.ndarray, save_path: str) -> None:
