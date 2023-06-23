@@ -37,8 +37,12 @@ class Cube(Surface):
                 ):
                     return None
             else:
-                t1 = (self.position[i] - self.half_scale - ray.source[i]) / ray.direction[i]
-                t2 = (self.position[i] + self.half_scale - ray.source[i]) / ray.direction[i]
+                t1 = (
+                    self.position[i] - self.half_scale - ray.source[i]
+                ) / ray.direction[i]
+                t2 = (
+                    self.position[i] + self.half_scale - ray.source[i]
+                ) / ray.direction[i]
                 if t1 > t2:
                     t1, t2 = t2, t1
 

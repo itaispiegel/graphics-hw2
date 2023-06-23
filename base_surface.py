@@ -2,7 +2,6 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from consts import EPSILON
 from material import Material
 from ray import Ray
 
@@ -17,13 +16,14 @@ class Surface:
         """
         raise NotImplementedError()
 
-    def reflection(self, ray_vec: np.ndarray, intersection: np.ndarray) -> np.ndarray:
+    def reflection_ray(self, ray: Ray, intersection: np.ndarray) -> Ray:
         """
-        Receive the ray vector and intersection point on the surface, and return the reflection vector.
+        Receive a ray and intersection point on the surface, and return the reflected ray.
         """
-        normal = self.normal_at_point(intersection, ray_vec)
-        reflection_vec = ray_vec - 2 * (ray_vec @ normal) * normal
-        return reflection_vec / np.linalg.norm(reflection_vec)
+        normal = self.normal_at_point(intersection, ray.direction)
+        reflection_vec = ray.direction - 2 * (ray.direction @ normal) * normal
+        reflection_vec /= np.linalg.norm(reflection_vec)
+        return Ray(intersection, reflection_vec)
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
         """

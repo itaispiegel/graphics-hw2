@@ -44,7 +44,7 @@ def get_color(
     if surface.material.is_reflective():
         color += (
             get_color(
-                Ray(intersection, surface.reflection(ray.direction, intersection)),
+                surface.reflection_ray(ray, intersection),
                 surfaces,
                 lights,
                 scene_settings,
@@ -69,7 +69,9 @@ def is_path_clear(
     """
     light_ray = Ray.ray_between_points(source, dest)
     _, light_intersection = get_closest_surface(light_ray, surfaces)
-    return light_intersection is None or np.allclose(dest, light_intersection, atol=EPSILON)
+    return light_intersection is None or np.allclose(
+        dest, light_intersection, atol=EPSILON
+    )
 
 
 def get_light_intensity(
@@ -148,8 +150,8 @@ def phong(
         l = Ray.ray_between_points(intersection, light.position)
         v = Ray.ray_between_points(intersection, source)
         normal = surface.normal_at_point(intersection, -l.direction)
-        r_vec = surface.reflection(
-            -l.direction, intersection
+        reflected_ray = surface.reflection_ray(
+            -l, intersection
         )  # the reflection method needs a vector FROM the source TO the intersection
 
         light_intensity = get_light_intensity(
@@ -159,7 +161,7 @@ def phong(
         specular = (
             surface.material.specular_color
             * light.specular_intensity
-            * (v.direction @ r_vec) ** surface.material.shininess
+            * (v.direction @ reflected_ray.direction) ** surface.material.shininess
         )
         color += (diffuse + specular) * light.color * light_intensity
 
