@@ -5,13 +5,15 @@ import numpy as np
 from base_surface import Material, Surface
 from ray import Ray
 
-NORMAL_TUPLE = (
-    np.array([1, 0, 0], dtype=np.float64),
-    np.array([-1, 0, 0], dtype=np.float64),
-    np.array([0, 1, 0], dtype=np.float64),
-    np.array([0, -1, 0], dtype=np.float64),
-    np.array([0, 0, 1], dtype=np.float64),
-    np.array([0, 0, -1], dtype=np.float64),
+NORMALS = np.array(
+    [
+        np.array([1, 0, 0], dtype=np.float64),
+        np.array([-1, 0, 0], dtype=np.float64),
+        np.array([0, 1, 0], dtype=np.float64),
+        np.array([0, -1, 0], dtype=np.float64),
+        np.array([0, 0, 1], dtype=np.float64),
+        np.array([0, 0, -1], dtype=np.float64),
+    ]
 )
 
 
@@ -56,14 +58,13 @@ class Cube(Surface):
         return ray.at(t) if t >= 0 else None
 
     def normal_at_point(self, point: np.ndarray, ray_vec: np.ndarray) -> np.ndarray:
-        # we are assuming that the point is on the surface of the cube
-        closest_normal = None
-        closest_dist = float("inf")
-
-        for normal in NORMAL_TUPLE:
-            dist = np.linalg.norm(point - (self.position + (normal * self.half_scale)))
-            if dist < closest_dist:
-                closest_dist = dist
-                closest_normal = normal
-
-        return closest_normal
+        """
+        Calculate the normal at the given point, assuming it's on the cub's surface.
+        This calculation uses the fact that the face center closest to a point on the surface
+        of a cube is the center of the face the point is on.
+        """
+        point_to_centers_vectors = np.linalg.norm(
+            point - (self.position + (NORMALS * self.half_scale))
+        )
+        closest = np.argmin(point_to_centers_vectors)
+        return NORMALS[closest]
