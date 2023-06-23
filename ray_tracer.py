@@ -7,7 +7,7 @@ from PIL import Image
 
 from base_surface import Surface
 from camera import Camera
-from colors import get_color
+from colors import calculate_color
 from consts import COLOR_CHANNELS, COLOR_SCALE
 from light import Light
 from progressbar import progressbar
@@ -56,16 +56,13 @@ class RayTracer:
         ):
             ray = self.construct_ray_through_pixel(height, width, i, j)
 
-            color = get_color(
+            color = calculate_color(
                 ray,
                 self.surfaces,
                 self.lights,
                 self.scene_settings,
             )
             img_mat[i][j] = np.clip(color, 0, 1) * COLOR_SCALE
-            print(
-                f"Pixel: {i},{j} - color: {img_mat[i][j][0]} {img_mat[i][j][1]} {img_mat[i][j][2]}"
-            )
 
 
 def save_image(image_array: np.ndarray, save_path: str) -> None:

@@ -14,3 +14,6 @@ class Ray:
         direction = dest - source
         direction /= np.linalg.norm(direction)
         return cls(source, direction)
+
+    def __neg__(self) -> "Ray":
+        return Ray(self.source, -self.direction)
