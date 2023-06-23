@@ -75,7 +75,7 @@ def is_path_clear(
     )
 
 
-def get_light_intensity(
+def calculate_light_intensity(
     surfaces: List[Surface],
     light: Light,
     scene_settings: SceneSettings,
@@ -88,37 +88,47 @@ def get_light_intensity(
             - is_path_clear(light.position, point, surfaces) * light.shadow_intensity
         )
 
+    total_lights_cnt = (
+        scene_settings.root_number_shadow_rays * scene_settings.root_number_shadow_rays
+    )
     light_hit_cnt = 0
     normal = Ray.ray_between_points(light.position, point)
     vec1, vec2 = vector.orthonormal_vector_pair(normal.direction)
 
-    # get the top left corner of the grid
     half_r = light.radius / 2.0
     top_left = light.position - (half_r * vec1) - (half_r * vec2)
 
-    # check if the light hits the surface from each square in the grid
     grid_square_length = light.radius / scene_settings.root_number_shadow_rays
-    for i in range(scene_settings.root_number_shadow_rays):
-        for j in range(scene_settings.root_number_shadow_rays):
-            # get the corners of the square
-            corner1 = (
-                top_left
-                + (i * grid_square_length * vec1)
-                + (j * grid_square_length * vec2)
-            )
-            corner2 = (
-                top_left
-                + ((i + 1) * grid_square_length * vec1)
-                + ((j + 1) * grid_square_length * vec2)
-            )
+    row_indices = np.repeat(
+        np.arange(scene_settings.root_number_shadow_rays),
+        scene_settings.root_number_shadow_rays,
+    )[:, np.newaxis]
+    col_indices = np.tile(
+        np.arange(scene_settings.root_number_shadow_rays),
+        scene_settings.root_number_shadow_rays,
+    )[:, np.newaxis]
 
-            # Calculate the minimum and maximum coordinates for each dimension
-            min_coords = np.minimum(corner1, corner2)
-            max_coords = np.maximum(corner1, corner2)
+    vec1_repeated = np.repeat(vec1[np.newaxis, :], total_lights_cnt, axis=0)
+    vec2_repeated = np.repeat(vec2[np.newaxis, :], total_lights_cnt, axis=0)
 
-            # Generate random coordinates within the square
-            light_source = np.random.uniform(min_coords, max_coords)
-            light_hit_cnt += is_path_clear(light_source, point, surfaces)
+    corners1 = (
+        top_left
+        + row_indices * grid_square_length * vec1_repeated
+        + col_indices * grid_square_length * vec2_repeated
+    )
+    corners2 = (
+        corners1
+        + grid_square_length * vec1_repeated
+        + grid_square_length * vec2_repeated
+    )
+
+    min_coords = np.minimum(corners1, corners2)
+    max_coords = np.maximum(corners1, corners2)
+    light_sources = np.random.uniform(min_coords, max_coords)
+    light_hit_cnt = sum(
+        is_path_clear(light_source, point, surfaces)
+        for light_source in light_sources.reshape(25, 3)
+    )
 
     # return the light intensity
     return (1 - light.shadow_intensity) + light.shadow_intensity * (
@@ -142,7 +152,7 @@ def phong(
         normal = surface.normal_at_point(intersection, -l.direction)
         reflected_ray = surface.reflection_ray(-l, intersection)
 
-        light_intensity = get_light_intensity(
+        light_intensity = calculate_light_intensity(
             surfaces, light, scene_settings, intersection
         )
         diffuse = surface.material.diffuse_color * (normal @ l.direction)
