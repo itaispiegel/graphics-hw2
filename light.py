@@ -53,10 +53,8 @@ class Light:
         If the number of shadow rays is 1, we calculate "hard shadows" instead.
         """
         if root_number_shadow_rays == 1:
-            return (
-                1.0
-                - Light.is_path_clear(self.position, point, surfaces)
-                * self.shadow_intensity
+            return 1.0 - self.shadow_intensity * (
+                not Light.is_path_clear(self.position, point, surfaces)
             )
 
         normal = Ray.ray_between_points(self.position, point)
