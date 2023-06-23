@@ -30,9 +30,9 @@ class Light:
         surfaces: List[Surface],
     ) -> bool:
         """
-        Returns true iff the light source hits the surface at the intersection point
-        without hitting any other surface on the way.
-        This method expects point dest to be on a surface and the source to be a light source.
+        Returns true iff the light source a surface at the given dest point without hitting
+        any other surface on the way.
+        This method expects the dest point to be on a surface and the source to be a light source.
         """
         light_ray = Ray.ray_between_points(source, dest)
         _, light_intersection = get_closest_surface(light_ray, surfaces)
@@ -99,3 +99,36 @@ class Light:
         return (1 - self.shadow_intensity) + self.shadow_intensity * (
             light_hit_cnt / (root_number_shadow_rays**2)
         )
+
+    def calculate_phong_specularity(
+        self,
+        point: np.ndarray,
+        v: np.ndarray,
+        surface: Surface,
+        surfaces: List[Surface],
+        root_number_shadow_rays: int,
+    ) -> np.ndarray:
+        """
+        Calculate the phong specularity color at the given point, assuming that it's on a surface.
+
+        :param point: The point to calculate the phong specularity color of.
+        :param v: The ray to calculate the specularity for.
+        At the first call, this ray will be from shot the viewer.
+        :param surface: The surface the point is on.
+        :param surfaces: The list of all surfaces in the scene.
+        :param root_number_shadow_rays: The root of the number of shadow rays to cast.
+        """
+        l = Ray.ray_between_points(point, self.position)
+        normal = surface.normal_at_point(point, -l.direction)
+        reflected_ray = surface.reflection_ray(-l, point)
+
+        light_intensity = self.calculate_intensity(
+            surfaces, root_number_shadow_rays, point
+        )
+        diffuse = surface.material.diffuse_color * (normal @ l.direction)
+        specular = (
+            surface.material.specular_color
+            * self.specular_intensity
+            * (v.direction @ reflected_ray.direction) ** surface.material.shininess
+        )
+        return (diffuse + specular) * self.color * light_intensity

@@ -7,7 +7,7 @@ from PIL import Image
 
 from base_surface import Surface
 from camera import Camera
-from colors import get_color
+from colors import calculate_color
 from consts import COLOR_CHANNELS, COLOR_SCALE
 from light import Light
 from progressbar import progressbar
@@ -56,7 +56,7 @@ class RayTracer:
         ):
             ray = self.construct_ray_through_pixel(height, width, i, j)
 
-            color = get_color(
+            color = calculate_color(
                 ray,
                 self.surfaces,
                 self.lights,
