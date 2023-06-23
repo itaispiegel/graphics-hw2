@@ -63,8 +63,8 @@ class Cube(Surface):
         This calculation uses the fact that the face center closest to a point on the surface
         of a cube is the center of the face the point is on.
         """
-        point_to_centers_vectors = np.linalg.norm(
-            point - (self.position + (NORMALS * self.half_scale))
-        )
+        point_repeated = np.repeat(point[np.newaxis, :], len(NORMALS), axis=0)
+        centers = self.position + NORMALS * self.half_scale
+        point_to_centers_vectors = np.linalg.norm(point_repeated - centers, axis=1)
         closest = np.argmin(point_to_centers_vectors)
         return NORMALS[closest]
