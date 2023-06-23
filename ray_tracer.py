@@ -1,64 +1,73 @@
 import argparse
-from typing import List, Optional
+import itertools
+from typing import List
 
 import numpy as np
 from PIL import Image
 
+from base_surface import Surface
+from camera import Camera
+from colors import calculate_color
+from consts import COLOR_CHANNELS, COLOR_SCALE
 from light import Light
+from progressbar import progressbar
+from ray import Ray
 from scene import SceneSettings, parse_scene_file
-from surfaces import Surface
 
 
-def get_color(
-    source: np.ndarray,
-    ray_vec: np.ndarray,
-    surfaces: List[Surface],
-    lights: List[Light],
-    scene_settings: SceneSettings,
-    curr_surface: Optional[Surface] = None,
-    iteration: int = 0,
-):
-    if iteration == scene_settings.max_recursions:
-        return scene_settings.background_color
+class RayTracer:
+    def __init__(
+        self,
+        camera: Camera,
+        scene_settings: SceneSettings,
+        surfaces: List[Surface],
+        lights: List[Light],
+    ):
+        self.camera = camera
+        self.scene_settings = scene_settings
+        self.surfaces = surfaces
+        self.lights = lights
 
-    obj, intersection_point = get_closest_surface(
-        source, ray_vec, surfaces, curr_surface
-    )
-    if not obj:
-        return scene_settings.background_color
+        self.v = Ray.ray_between_points(self.camera.position, self.camera.look_at)
+        self.p_c = self.v.at(self.camera.screen_distance)
+        self.v_right = np.cross(self.v.direction, self.camera.up_vector)
+        self.v_right /= np.linalg.norm(self.v_right)
+        self.v_up = np.cross(self.v_right, self.v.direction)
+        self.v_up /= np.linalg.norm(self.v_up)
 
-    return (0, 0, 0)
+    def construct_ray_through_pixel(
+        self, height: int, width: int, i: int, j: int
+    ) -> Ray:
+        ratio = self.camera.screen_width / width
+        p = (
+            self.p_c
+            + ((j - width // 2) * ratio * self.v_right)
+            - ((i - height // 2) * ratio * self.v_up)
+        )
+        return Ray.ray_between_points(self.camera.position, p)
+
+    def ray_trace(self, img_mat: np.ndarray) -> None:
+        height, width, _ = img_mat.shape
+
+        for i, j in progressbar(
+            itertools.product(range(height), range(width)),
+            count=height * width,
+            prefix="Computing: ",
+        ):
+            ray = self.construct_ray_through_pixel(height, width, i, j)
+
+            color = calculate_color(
+                ray,
+                self.surfaces,
+                self.lights,
+                self.scene_settings,
+            )
+            img_mat[i][j] = np.clip(color, 0, 1) * COLOR_SCALE
 
 
-# returns the closet surface to the source and the intersection point of the ray on object
-def get_closest_surface(
-    source: np.ndarray,
-    ray_vec: np.ndarray,
-    surfaces: List[Surface],
-    curr_surface: Surface,
-):
-    closest_surface = None
-    closest_intersection_point = None
-    min_dist = float("inf")
-
-    for surface in surfaces:
-        if surface == curr_surface:
-            continue
-
-        intersection_point, dist = surface.intersect(source, ray_vec)
-        if dist and dist < min_dist:
-            closest_surface = surface
-            closest_intersection_point = intersection_point
-            min_dist = dist
-
-    return closest_surface, closest_intersection_point
-
-
-def save_image(image_array: np.ndarray):
+def save_image(image_array: np.ndarray, save_path: str) -> None:
     image = Image.fromarray(np.uint8(image_array))
-
-    # Save the image to a file
-    image.save("scenes/Spheres.png")
+    image.save(save_path)
 
 
 def main():
@@ -69,40 +78,11 @@ def main():
     parser.add_argument("--height", type=int, default=500, help="Image height")
     args = parser.parse_args()
 
-    # Parse the scene file
     camera, scene_settings, surfaces, lights = parse_scene_file(args.scene_file)
-
-    # TODO: Implement the ray tracer
-    image_array = np.zeros((args.height, args.width, 3))
-
-    # calculate image's center, towards vector, right vector and up vector and the ratio
-    v_to = camera.look_at - camera.position
-    v_to /= np.linalg.norm(v_to)
-    p_c = camera.position + (camera.screen_distance * v_to)
-    v_right = np.cross(v_to, camera.up_vector)
-    v_right /= np.linalg.norm(v_right)
-    v_up = np.cross(v_right, camera.look_at)
-    v_up /= np.linalg.norm(v_up)
-    ratio = camera.screen_width / args.width
-
-    # calculate the color of each pixel
-    for i in range(args.height):
-        for j in range(args.width):
-            # calculate the ray's vector and the point (p) on the screen
-            p = (
-                p_c
-                + ((j - int(args.width / 2)) * ratio * v_right)
-                - ((i - int(args.height / 2)) * ratio * v_up)
-            )
-            ray_vec = p - camera.position
-
-            # calculate the color of the pixel using ray tracing
-            image_array[i][j] = get_color(
-                camera.position, ray_vec, surfaces, lights, scene_settings
-            )
-
-    # Save the output image
-    save_image(image_array)
+    ray_tracer = RayTracer(camera, scene_settings, surfaces, lights)
+    img_mat = np.zeros((args.height, args.width, COLOR_CHANNELS))
+    ray_tracer.ray_trace(img_mat)
+    save_image(img_mat, args.output_image)
 
 
 if __name__ == "__main__":

@@ -3,8 +3,11 @@ from typing import List
 import numpy as np
 
 from camera import Camera
+from cube import Cube
+from infinite_plane import InfinitePlane
 from light import Light
-from surfaces import Cube, InfinitePlane, Material, Sphere
+from material import Material
+from sphere import Sphere
 
 
 class SceneSettings:
@@ -15,7 +18,7 @@ class SceneSettings:
         max_recursions: float,
     ):
         self.background_color = np.array(background_color)
-        self.root_number_shadow_rays = root_number_shadow_rays
+        self.root_number_shadow_rays = int(root_number_shadow_rays)
         self.max_recursions = max_recursions
 
 
