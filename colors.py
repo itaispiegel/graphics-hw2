@@ -2,6 +2,7 @@ from typing import List, Optional
 
 import numpy as np
 
+import vector
 from base_surface import Surface, get_closest_surface
 from consts import COLOR_CHANNELS, EPSILON
 from light import Light
@@ -26,9 +27,9 @@ def get_color(
     if not surface:
         return scene_settings.background_color
 
-    color = phong(
-        ray.source, intersection, surface, surfaces, lights, scene_settings
-    ) * (1 - surface.material.transparency)
+    color = phong(ray, intersection, surface, surfaces, lights, scene_settings) * (
+        1 - surface.material.transparency
+    )
     if surface.material.transparency > 0:
         color += (
             get_color(
@@ -78,27 +79,18 @@ def get_light_intensity(
     surfaces: List[Surface],
     light: Light,
     scene_settings: SceneSettings,
-    intersection: np.ndarray,
+    point: np.ndarray,
 ) -> float:
     # if we need to produce hard shadows
     if scene_settings.root_number_shadow_rays == 1:
         return (
             1.0
-            if is_path_clear(light.position, intersection, surfaces)
-            else 1.0 - light.shadow_intensity
+            - is_path_clear(light.position, point, surfaces) * light.shadow_intensity
         )
 
     light_hit_cnt = 0
-
-    # get 2 vectors that are orthogonal to the normal vector
-    normal = Ray.ray_between_points(light.position, intersection)
-    fixed_vector = np.array([1.0, 0.0, 0.0], dtype=np.float64)
-    if np.allclose(normal.direction, fixed_vector, atol=EPSILON):
-        fixed_vector = np.array([0.0, 1.0, 0.0], dtype=np.float64)
-    vec1 = np.cross(normal.direction, fixed_vector)
-    vec1 /= np.linalg.norm(vec1)
-    vec2 = np.cross(normal.direction, vec1)
-    vec2 /= np.linalg.norm(vec2)
+    normal = Ray.ray_between_points(light.position, point)
+    vec1, vec2 = vector.orthonormal_vector_pair(normal.direction)
 
     # get the top left corner of the grid
     half_r = light.radius / 2.0
@@ -126,9 +118,7 @@ def get_light_intensity(
 
             # Generate random coordinates within the square
             light_source = np.random.uniform(min_coords, max_coords)
-
-            if is_path_clear(light_source, intersection, surfaces):
-                light_hit_cnt += 1
+            light_hit_cnt += is_path_clear(light_source, point, surfaces)
 
     # return the light intensity
     return (1 - light.shadow_intensity) + light.shadow_intensity * (
@@ -137,7 +127,7 @@ def get_light_intensity(
 
 
 def phong(
-    source: np.ndarray,
+    ray: Ray,
     intersection: np.ndarray,
     surface: Surface,
     surfaces: List[Surface],
@@ -145,14 +135,12 @@ def phong(
     scene_settings: SceneSettings,
 ) -> np.ndarray:
     color = np.zeros(COLOR_CHANNELS, dtype=np.float64)
+    v = -ray
 
     for light in lights:
         l = Ray.ray_between_points(intersection, light.position)
-        v = Ray.ray_between_points(intersection, source)
         normal = surface.normal_at_point(intersection, -l.direction)
-        reflected_ray = surface.reflection_ray(
-            -l, intersection
-        )  # the reflection method needs a vector FROM the source TO the intersection
+        reflected_ray = surface.reflection_ray(-l, intersection)
 
         light_intensity = get_light_intensity(
             surfaces, light, scene_settings, intersection
